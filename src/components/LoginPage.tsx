@@ -192,12 +192,12 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Back Button */}
           <button
-            onClick={() => onNavigate('signup')}
+            onClick={() => onNavigate('landing')}
             className="flex items-center text-sm mb-6 transition-colors"
             style={{ color: '#696FC7' }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Sign Up
+            Back to Home Page
           </button>
 
           {/* Header */}
