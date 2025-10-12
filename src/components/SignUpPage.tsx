@@ -16,7 +16,11 @@ interface PasswordRequirements {
   hasLowercase: boolean;
 }
 
-export default function SignUpPage() {
+interface SignUpPageProps {
+  onNavigate?: (section: string) => void;
+}
+
+export default function SignUpPage({ onNavigate }: SignUpPageProps) {
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -546,7 +550,7 @@ export default function SignUpPage() {
                 type="button"
                 className="font-semibold hover:underline"
                 style={{ color: '#696FC7' }}
-                onClick={() => {/* Navigate to login */}}
+                onClick={() => onNavigate?.('login')}
               >
                 Log in
               </button>
