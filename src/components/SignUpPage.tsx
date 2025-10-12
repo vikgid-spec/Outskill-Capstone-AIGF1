@@ -71,9 +71,6 @@ export default function SignUpPage() {
   // Check username availability
   const checkUsernameAvailability = async (username: string) => {
     try {
-      // Grant base permissions to anonymous users
-      GRANT SELECT, INSERT ON users TO anon;
-      
       const { data, error } = await supabase
         .from('users')
         .select('username')
