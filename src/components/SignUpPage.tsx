@@ -314,10 +314,10 @@ export default function SignUpPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-serif font-bold mb-2" style={{ color: '#2D2D2D' }}>
-              H.G. Hawa & Co
+            <h1 className="text-3xl font-serif font-bold mb-4" style={{ color: '#2D2D2D' }}>
+              Create Account
             </h1>
-            <p className="text-gray-600 font-sans">
+            <p className="text-gray-600 font-sans mb-2">
               Purchase Order Management System
             </p>
           </div>
