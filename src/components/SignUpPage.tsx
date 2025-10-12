@@ -71,6 +71,9 @@ export default function SignUpPage() {
   // Check username availability
   const checkUsernameAvailability = async (username: string) => {
     try {
+      // Grant base permissions to anonymous users
+      GRANT SELECT, INSERT ON users TO anon;
+      
       const { data, error } = await supabase
         .from('users')
         .select('username')
@@ -104,31 +107,25 @@ export default function SignUpPage() {
   // Check email availability
   const checkEmailAvailability = async (email: string) => {
     try {
-      const { data, error } = await supabase.auth.admin.listUsers();
-      
-      if (error) {
-        // Fallback: check in our users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('email')
-          .eq('email', email)
-          .single();
+      // Check in our users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
 
-        if (userError && userError.code === 'PGRST116') {
-          return { isValid: true, message: '' };
-        } else if (userData) {
-          return { isValid: false, message: 'Email already registered' };
-        }
-      }
-
-      const existingUser = data?.users.find(user => user.email === email);
-      if (existingUser) {
+      if (userError && userError.code === 'PGRST116') {
+        // No rows returned, email is available
+        return { isValid: true, message: '' };
+      } else if (userData) {
+        // Email exists
         return { isValid: false, message: 'Email already registered' };
+      } else {
+        // Other error
+        return { isValid: false, message: 'Error checking email availability' };
       }
-
-      return { isValid: true, message: '' };
     } catch (error) {
-      return { isValid: true, message: '' }; // Allow registration attempt
+      return { isValid: false, message: 'Error checking email availability' };
     }
   };
 
@@ -239,38 +236,36 @@ export default function SignUpPage() {
     setSubmitMessage(null);
 
     try {
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
+      // Insert user data into our users table
+      const { data, error } = await supabase
+        .from('users')
+        .insert([
+          {
             name: formData.name,
-            username: formData.username
+            username: formData.username,
+            email: formData.email
           }
-        }
+        ])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      // Create user in Supabase Auth with the same ID
+      const { error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password
       });
 
       if (authError) {
-        throw authError;
-      }
-
-      // Insert user data into our users table
-      if (authData.user) {
-        const { error: insertError } = await supabase
+        // If auth fails, we should clean up the user record
+        await supabase
           .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              name: formData.name,
-              username: formData.username,
-              email: formData.email
-            }
-          ]);
-
-        if (insertError) {
-          throw insertError;
-        }
+          .delete()
+          .eq('email', formData.email);
+        
+        throw authError;
       }
 
       setSubmitMessage({
