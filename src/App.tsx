@@ -3,9 +3,10 @@ import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import SupabaseTest from './components/SupabaseTest';
 import MillsTest from './components/MillsTest';
+import SignUpPage from './components/SignUpPage';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'test' | 'mills'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'test' | 'mills' | 'signup'>('signup');
 
   const handleNavigation = (section: string) => {
     if (section === 'dashboard') {
@@ -16,6 +17,8 @@ function App() {
       setCurrentView('mills');
     } else if (section === 'landing') {
       setCurrentView('landing');
+    } else if (section === 'signup') {
+      setCurrentView('signup');
     }
   };
 
@@ -27,6 +30,8 @@ function App() {
         <SupabaseTest />
       ) : currentView === 'mills' ? (
         <MillsTest />
+      ) : currentView === 'signup' ? (
+        <SignUpPage />
       ) : (
         <Dashboard onNavigate={handleNavigation} />
       )}
