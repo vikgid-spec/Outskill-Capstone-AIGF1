@@ -16,7 +16,6 @@ export default function Navigation({ onNavigate }: NavigationProps) {
     { label: 'How it Works', href: 'how-it-works' },
     { label: 'Benefits', href: 'benefits' },
     { label: 'Pricing', href: 'pricing' },
-    { label: 'Dashboard', href: 'dashboard' },
   ];
 
   const scrollToSection = (id: string) => {
@@ -49,12 +48,20 @@ export default function Navigation({ onNavigate }: NavigationProps) {
             ))}
           </div>
 
-          <button
-            onClick={() => scrollToSection('pricing')}
-            className="hidden md:block px-7 py-3 rounded-full bg-primary text-white font-semibold shadow-[0_4px_16px_rgba(30,90,125,0.3)] hover:shadow-[0_6px_24px_rgba(30,90,125,0.4)] transition-all duration-200 hover:scale-105 hover:bg-[#174864]"
-          >
-            Book a Demo
-          </button>
+          <div className="hidden md:flex items-center space-x-4">
+            <button
+              onClick={() => onNavigate('login')}
+              className="px-6 py-2.5 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => scrollToSection('pricing')}
+              className="px-7 py-3 rounded-full bg-primary text-white font-semibold shadow-[0_4px_16px_rgba(30,90,125,0.3)] hover:shadow-[0_6px_24px_rgba(30,90,125,0.4)] transition-all duration-200 hover:scale-105 hover:bg-[#174864]"
+            >
+              Book a Demo
+            </button>
+          </div>
 
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -75,6 +82,12 @@ export default function Navigation({ onNavigate }: NavigationProps) {
                 {item.label}
               </button>
             ))}
+            <button
+              onClick={() => onNavigate('login')}
+              className="block w-full px-6 py-3 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-md text-left"
+            >
+              Login
+            </button>
             <button
               onClick={() => scrollToSection('pricing')}
               className="block w-full px-6 py-3 rounded-full bg-primary text-white font-semibold shadow-lg"
