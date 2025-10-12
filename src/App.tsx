@@ -7,7 +7,7 @@ import SignUpPage from './components/SignUpPage';
 import LoginPage from './components/LoginPage';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'test' | 'mills' | 'signup' | 'login'>('login');
+  const [currentView, setCurrentView] = useState<'landing' | 'dashboard' | 'test' | 'mills' | 'signup' | 'login'>('landing');
 
   const handleNavigation = (section: string) => {
     if (section === 'dashboard') {
