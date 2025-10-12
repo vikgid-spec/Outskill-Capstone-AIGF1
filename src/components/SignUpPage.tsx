@@ -75,17 +75,18 @@ export default function SignUpPage() {
         .from('users')
         .select('username')
         .eq('username', username)
-        .single();
+        .limit(1);
 
-      if (error && error.code === 'PGRST116') {
+      if (error) {
+        return { isValid: false, message: 'Error checking username availability' };
+      }
+      
+      if (data.length === 0) {
         // No rows returned, username is available
         return { isValid: true, message: 'Username available' };
-      } else if (data) {
+      } else {
         // Username exists
         return { isValid: false, message: 'Username already taken' };
-      } else {
-        // Other error
-        return { isValid: false, message: 'Error checking username availability' };
       }
     } catch (error) {
       return { isValid: false, message: 'Error checking username availability' };
@@ -109,17 +110,18 @@ export default function SignUpPage() {
         .from('users')
         .select('email')
         .eq('email', email)
-        .single();
+        .limit(1);
 
-      if (userError && userError.code === 'PGRST116') {
+      if (userError) {
+        return { isValid: false, message: 'Error checking email availability' };
+      }
+      
+      if (userData.length === 0) {
         // No rows returned, email is available
         return { isValid: true, message: '' };
-      } else if (userData) {
+      } else {
         // Email exists
         return { isValid: false, message: 'Email already registered' };
-      } else {
-        // Other error
-        return { isValid: false, message: 'Error checking email availability' };
       }
     } catch (error) {
       return { isValid: false, message: 'Error checking email availability' };
