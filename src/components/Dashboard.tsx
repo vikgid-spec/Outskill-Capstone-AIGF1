@@ -1,6 +1,9 @@
-import { LayoutDashboard, Package, Clock, CheckCircle, AlertCircle, TrendingUp, DollarSign, Users } from 'lucide-react';
+import { LayoutDashboard, Package, Clock, CheckCircle, AlertCircle, TrendingUp, DollarSign, Users, FileText, Building2 } from 'lucide-react';
 import logo from '../assets/Simbly-logo copy.jpg';
-import { supabase } from '../lib/supabase'
+import { useState, useEffect } from 'react';
+import POList from './POList';
+import ConsigneeList from './ConsigneeList';
+import SupplierList from './SupplierList';
 
 
 interface DashboardProps {
@@ -8,6 +11,19 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'po-list' | 'consignee-list' | 'supplier-list'>('dashboard');
+
+  // Debug: Log activeTab changes
+  useEffect(() => {
+    console.log('Active tab changed to:', activeTab);
+  }, [activeTab]);
+
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'po-list', label: 'PO List', icon: FileText },
+    { id: 'consignee-list', label: 'Consignee List', icon: Users },
+    { id: 'supplier-list', label: 'Supplier List', icon: Building2 },
+  ];
   const stats = [
     {
       label: 'Total Orders',
@@ -150,10 +166,40 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Tab Navigation */}
         <div className="mb-8">
-          <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening with your orders today.</p>
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    console.log('Tab clicked:', tab.id);
+                    setActiveTab(tab.id as any);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon size={18} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === 'dashboard' && (
+          <>
+            <div className="mb-8">
+              <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">Dashboard</h1>
+              <p className="text-gray-600">Welcome back! Here's what's happening with your orders today.</p>
+            </div>
+
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
@@ -294,6 +340,17 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             <div className="mt-4 text-sm text-green-600 font-medium">Time saved: 12.5 hrs/week</div>
           </div>
         </div>
+          </>
+        )}
+
+        {activeTab === 'po-list' && (
+          <div>
+            <h1 className="text-2xl font-bold mb-4">PO List Tab Active</h1>
+            <POList />
+          </div>
+        )}
+        {activeTab === 'consignee-list' && <ConsigneeList />}
+        {activeTab === 'supplier-list' && <SupplierList />}
       </div>
     </div>
   );
