@@ -1,4 +1,4 @@
-import { Package, Search, Filter, Plus, Eye, Edit, Trash2, Calendar, User, Download, Loader2 } from 'lucide-react';
+import { Package, Search, Filter, Plus, Eye, CreditCard as Edit, Trash2, Calendar, User, Download, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
