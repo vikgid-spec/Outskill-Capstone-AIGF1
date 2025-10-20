@@ -212,11 +212,11 @@ export default function POList() {
         }
       }
       
-      // If no file found through listing, try public URL approach first (since bucket is public)
+      // If no file found through listing, try direct signed URL approach
       if (!foundPath) {
-        console.log(`❌ No PDF found through listing, trying public URL approach...`);
+        console.log(`❌ No PDF found through listing, trying direct signed URL approach...`);
         
-        const publicPaths = [
+        const directPaths = [
           `Purchase Order - ${poId} -Greentex paper mill - Oct 17, 2025 .pdf`,
           `Purchase Order - ${poId} -`,
           `${poId}.pdf`,
@@ -224,55 +224,23 @@ export default function POList() {
           `${numericId}.pdf`
         ];
         
-        for (const publicPath of publicPaths) {
+        for (const directPath of directPaths) {
           try {
-            const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(publicPath)}`;
-            console.log(`🔍 Testing public URL: ${publicUrl}`);
+            console.log(`🔍 Trying direct signed URL for: ${directPath}`);
+            const { data, error } = await supabase.storage
+              .from('nonpublic')
+              .createSignedUrl(directPath, 60);
             
-            // Test if the URL is accessible
-            const response = await fetch(publicUrl, { method: 'HEAD' });
-            if (response.ok) {
-              console.log(`✅ Public URL accessible: ${publicPath}`);
-              foundPath = publicPath;
-              signedUrl = publicUrl;
+            if (!error && data?.signedUrl) {
+              console.log(`✅ Direct signed URL successful for: ${directPath}`);
+              foundPath = directPath;
+              signedUrl = data.signedUrl;
               break;
             } else {
-              console.log(`❌ Public URL not accessible: ${publicPath} (${response.status})`);
+              console.log(`❌ Direct signed URL failed for: ${directPath}`);
             }
           } catch (err) {
-            console.log(`❌ Error testing public URL for ${publicPath}:`, err);
-          }
-        }
-        
-        // If public URLs fail, try signed URL approach as fallback
-        if (!foundPath) {
-          console.log(`🔍 Public URLs failed, trying signed URL approach...`);
-          const directPaths = [
-            `Purchase Order - ${poId} -Greentex paper mill - Oct 17, 2025 .pdf`,
-            `Purchase Order - ${poId} -`,
-            `${poId}.pdf`,
-            `PO-${numericId}.pdf`,
-            `${numericId}.pdf`
-          ];
-          
-          for (const directPath of directPaths) {
-            try {
-              console.log(`🔍 Trying direct signed URL for: ${directPath}`);
-              const { data, error } = await supabase.storage
-                .from('nonpublic')
-                .createSignedUrl(directPath, 60);
-              
-              if (!error && data?.signedUrl) {
-                console.log(`✅ Direct signed URL successful for: ${directPath}`);
-                foundPath = directPath;
-                signedUrl = data.signedUrl;
-                break;
-              } else {
-                console.log(`❌ Direct signed URL failed for: ${directPath}`);
-              }
-            } catch (err) {
-              console.log(`❌ Error with direct signed URL for ${directPath}:`, err);
-            }
+            console.log(`❌ Error with direct signed URL for ${directPath}:`, err);
           }
         }
         
@@ -372,18 +340,35 @@ export default function POList() {
         `${numericId}.pdf`
       ];
       
+      // Check if files exist using Supabase storage list method
+      const { data: files, error } = await supabase.storage
+        .from('nonpublic')
+        .list('', {
+          limit: 100,
+          offset: 0
+        });
+      
+      if (error) {
+        console.error('Error listing files in nonpublic bucket:', error);
+        return false;
+      }
+      
+      if (!files) {
+        console.log('No files found in nonpublic bucket');
+        return false;
+      }
+      
+      // Check if any of the possible file names exist
       for (const filePath of possiblePaths) {
-        try {
-          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(filePath)}`;
-          
-          // Test if the URL is accessible
-          const response = await fetch(publicUrl, { method: 'HEAD' });
-          if (response.ok) {
-            console.log(`✅ PDF exists at: ${filePath}`);
-            return true;
-          }
-        } catch (err) {
-          // Continue to next path
+        const fileExists = files.some(file => 
+          file.name === filePath || 
+          file.name.includes(filePath.replace(' -', '')) ||
+          (filePath.includes('Purchase Order -') && file.name.includes(filePath))
+        );
+        
+        if (fileExists) {
+          console.log(`✅ PDF exists: ${filePath}`);
+          return true;
         }
       }
       
@@ -443,29 +428,47 @@ export default function POList() {
     try {
       console.log('🔍 Debugging "nonpublic" bucket for POs 67-68 only...');
       
-      // Test known file patterns for POs 67-68
-      const testFiles = [
-        'Purchase Order - PO-068 -Greentex paper mill - Oct 17, 2025 .pdf',
-        'Purchase Order - PO-067 -Greentex paper mill - Oct 17, 2025 .pdf',
-        'PO-068.pdf',
-        'PO-067.pdf',
-        '068.pdf',
-        '067.pdf'
-      ];
+      // List all files in the nonpublic bucket
+      const { data: files, error } = await supabase.storage
+        .from('nonpublic')
+        .list('', {
+          limit: 100,
+          offset: 0
+        });
       
-      for (const fileName of testFiles) {
+      if (error) {
+        console.error('❌ Error listing files in nonpublic bucket:', error);
+        return;
+      }
+      
+      if (!files || files.length === 0) {
+        console.log('❌ No files found in nonpublic bucket');
+        return;
+      }
+      
+      console.log(`✅ Found ${files.length} files in nonpublic bucket:`);
+      files.forEach(file => {
+        console.log(`  - ${file.name} (${file.metadata?.size || 'unknown size'})`);
+      });
+      
+      // Test signed URL generation for PO-067 and PO-068 files
+      const poFiles = files.filter(file => 
+        file.name.includes('067') || file.name.includes('068')
+      );
+      
+      for (const file of poFiles) {
         try {
-          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(fileName)}`;
-          console.log(`🔍 Testing: ${fileName}`);
+          const { data, error } = await supabase.storage
+            .from('nonpublic')
+            .createSignedUrl(file.name, 60);
           
-          const response = await fetch(publicUrl, { method: 'HEAD' });
-          if (response.ok) {
-            console.log(`✅ Found: ${fileName} (${response.status})`);
+          if (error) {
+            console.log(`❌ Signed URL error for ${file.name}:`, error.message);
           } else {
-            console.log(`❌ Not found: ${fileName} (${response.status})`);
+            console.log(`✅ Signed URL generated for ${file.name}`);
           }
         } catch (err) {
-          console.log(`❌ Error testing ${fileName}:`, err);
+          console.log(`❌ Error generating signed URL for ${file.name}:`, err);
         }
       }
       
