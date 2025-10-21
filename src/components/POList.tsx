@@ -1,4 +1,4 @@
-import { Package, Search, Filter, Plus, Eye, Edit, Trash2, Calendar, User, Download, Loader2 } from 'lucide-react';
+import { Package, Search, Filter, Plus, Eye, CreditCard as Edit, Trash2, Calendar, User, Download, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -348,21 +348,39 @@ export default function POList() {
         try {
           const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(filePath)}`;
           
-          // Test if the URL is accessible
-          const response = await fetch(publicUrl, { method: 'HEAD' });
+          // Test if the URL is accessible with proper error handling
+          const response = await fetch(publicUrl, { 
+            method: 'HEAD',
+            // Add headers to avoid CORS issues
+            headers: {
+              'Accept': 'application/pdf'
+            }
+          });
+          
           if (response.ok) {
             console.log(`✅ PDF exists at: ${filePath}`);
             return true;
+          } else if (response.status === 400 || response.status === 404) {
+            // File doesn't exist, continue to next path
+            console.log(`❌ PDF not found at: ${filePath} (${response.status})`);
+            continue;
+          } else {
+            // Other errors (403, 500, etc.) - log but continue
+            console.log(`⚠️ Error accessing ${filePath}: ${response.status}`);
+            continue;
           }
         } catch (err) {
-          // Continue to next path
+          // Network or other errors - log and continue to next path
+          console.log(`❌ Network error checking ${filePath}:`, err);
+          continue;
         }
       }
       
       console.log(`❌ No PDF found for ${poId} (POs 67-68 only)`);
       return false;
     } catch (error) {
-      console.error('Error checking PDF existence:', error);
+      // Catch any unexpected errors and log them without throwing
+      console.error(`Error checking PDF existence for ${poId}:`, error);
       return false;
     }
   };
