@@ -1,15 +1,13 @@
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/Simbly-logo copy.jpg';
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext';
 
-
-interface NavigationProps {
-  onNavigate: (section: string) => void;
-}
-
-export default function Navigation({ onNavigate }: NavigationProps) {
+export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const navItems = [
     { label: 'Home', href: 'hero' },
@@ -19,13 +17,14 @@ export default function Navigation({ onNavigate }: NavigationProps) {
   ];
 
   const scrollToSection = (id: string) => {
-    if (id === 'dashboard') {
-      onNavigate('dashboard');
-    } else {
-      const element = document.getElementById(id);
-      element?.scrollIntoView({ behavior: 'smooth' });
-    }
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: 'smooth' });
     setIsOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/home');
   };
 
   return (
@@ -49,18 +48,41 @@ export default function Navigation({ onNavigate }: NavigationProps) {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={() => onNavigate('login')}
-              className="px-6 py-2.5 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => scrollToSection('pricing')}
-              className="px-7 py-3 rounded-full bg-primary text-white font-semibold shadow-[0_4px_16px_rgba(30,90,125,0.3)] hover:shadow-[0_6px_24px_rgba(30,90,125,0.4)] transition-all duration-200 hover:scale-105 hover:bg-[#174864]"
-            >
-              Book a Demo
-            </button>
+            {isAuthenticated ? (
+              <>
+                <div className="text-sm text-gray-600">
+                  Welcome, {user?.email}
+                </div>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="px-6 py-2.5 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition-all duration-200 hover:scale-105"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-6 py-2.5 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 hover:scale-105"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => scrollToSection('pricing')}
+                  className="px-7 py-3 rounded-full bg-primary text-white font-semibold shadow-[0_4px_16px_rgba(30,90,125,0.3)] hover:shadow-[0_6px_24px_rgba(30,90,125,0.4)] transition-all duration-200 hover:scale-105 hover:bg-[#174864]"
+                >
+                  Book a Demo
+                </button>
+              </>
+            )}
           </div>
 
           <button
@@ -82,18 +104,38 @@ export default function Navigation({ onNavigate }: NavigationProps) {
                 {item.label}
               </button>
             ))}
-            <button
-              onClick={() => onNavigate('login')}
-              className="block w-full px-6 py-3 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-md text-left"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => scrollToSection('pricing')}
-              className="block w-full px-6 py-3 rounded-full bg-primary text-white font-semibold shadow-lg"
-            >
-              Book a Demo
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="block w-full px-6 py-3 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-md text-left"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-6 py-3 rounded-full bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition-all duration-200 shadow-md text-left"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="block w-full px-6 py-3 rounded-full bg-white text-primary font-semibold border-2 border-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-md text-left"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => scrollToSection('pricing')}
+                  className="block w-full px-6 py-3 rounded-full bg-primary text-white font-semibold shadow-lg"
+                >
+                  Book a Demo
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

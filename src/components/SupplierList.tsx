@@ -1,5 +1,6 @@
 import { Building2, Search, Filter, Plus, Eye, Edit, Trash2, MapPin, Phone, Mail, Package, DollarSign, Star, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import AddSupplierModal from './AddSupplierModal';
 
 interface Supplier {
   Mill_id: string;
@@ -14,6 +15,7 @@ export default function SupplierList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Fetch supplier data using direct API call (same working approach as ConsigneeList)
   useEffect(() => {
@@ -71,6 +73,42 @@ export default function SupplierList() {
     console.log('Current supplierList:', supplierList);
     console.log('=== END STATE LOG ===');
   }, [supplierList]);
+
+  const handleSupplierAdded = () => {
+    // Refresh the supplier list
+    const refreshData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const apiUrl = 'https://smhmuegdoucznluneftm.supabase.co/rest/v1/Hawa_MillName?select=Mill_id,Mill_name,Mill_email,Mill_keywords&order=Mill_id';
+        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaG11ZWdkb3Vjem5sdW5lZnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjMxNTYsImV4cCI6MjA3NTQ5OTE1Nn0.dBcCg_esHz5UbHyAaccYUUlZevcykXzL6Cnb-2PltZ8';
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': apiKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setSupplierList(data);
+        setLastFetchTime(new Date());
+      } catch (err) {
+        console.error('Refresh error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to refresh');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    refreshData();
+  };
 
   const filteredSuppliers = supplierList.filter(supplier => {
     const matchesSearch = supplier.Mill_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -136,7 +174,10 @@ export default function SupplierList() {
           >
             🔄 Refresh
           </button>
-          <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-lg">
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-lg"
+          >
             <Plus size={20} />
             Add New Supplier
           </button>
@@ -301,6 +342,13 @@ export default function SupplierList() {
           </div>
         )}
       </div>
+
+      {/* Add Supplier Modal */}
+      <AddSupplierModal 
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleSupplierAdded}
+      />
     </div>
   );
 }

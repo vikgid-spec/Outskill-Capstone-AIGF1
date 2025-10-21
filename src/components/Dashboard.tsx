@@ -1,29 +1,17 @@
-import { LayoutDashboard, Package, Clock, CheckCircle, AlertCircle, TrendingUp, DollarSign, Users, FileText, Building2 } from 'lucide-react';
+import { Package, Clock, CheckCircle, TrendingUp, Users, Building2, LogOut, ArrowRight } from 'lucide-react';
 import logo from '../assets/Simbly-logo copy.jpg';
-import { useState, useEffect } from 'react';
-import POList from './POList';
-import ConsigneeList from './ConsigneeList';
-import SupplierList from './SupplierList';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const { user, logout, isAuthenticated } = useAuth();
 
-interface DashboardProps {
-  onNavigate: (section: string) => void;
-}
+  const handleLogout = async () => {
+    await logout();
+    navigate('/home');
+  };
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'po-list' | 'consignee-list' | 'supplier-list'>('dashboard');
-
-  // Debug: Log activeTab changes
-  useEffect(() => {
-    console.log('Active tab changed to:', activeTab);
-  }, [activeTab]);
-
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'po-list', label: 'PO List', icon: FileText },
-    { id: 'consignee-list', label: 'Consignee List', icon: Users },
-    { id: 'supplier-list', label: 'Supplier List', icon: Building2 },
-  ];
   const stats = [
     {
       label: 'Total Orders',
@@ -55,302 +43,155 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     },
   ];
 
-  const recentOrders = [
+  const navigationCards = [
     {
-      id: 'PO-2547',
-      customer: 'Sharma Electronics',
-      items: '25 items',
-      amount: '₹45,200',
-      status: 'Completed',
-      date: '2 hours ago',
+      title: 'PO List',
+      description: 'Manage purchase orders',
+      icon: Package,
+      href: '/polist',
+      color: 'bg-blue-50 border-blue-200 hover:bg-blue-100',
+      iconColor: 'text-blue-600',
     },
     {
-      id: 'PO-2546',
-      customer: 'Kumar Trading Co.',
-      items: '12 items',
-      amount: '₹28,900',
-      status: 'Pending',
-      date: '5 hours ago',
+      title: 'Consignee List',
+      description: 'Manage customers',
+      icon: Users,
+      href: '/consigneelist',
+      color: 'bg-green-50 border-green-200 hover:bg-green-100',
+      iconColor: 'text-green-600',
     },
     {
-      id: 'PO-2545',
-      customer: 'Patel Distributors',
-      items: '48 items',
-      amount: '₹67,500',
-      status: 'Processing',
-      date: '1 day ago',
-    },
-    {
-      id: 'PO-2544',
-      customer: 'Reddy Wholesale',
-      items: '33 items',
-      amount: '₹52,100',
-      status: 'Completed',
-      date: '1 day ago',
-    },
-    {
-      id: 'PO-2543',
-      customer: 'Verma Enterprises',
-      items: '19 items',
-      amount: '₹34,800',
-      status: 'Overdue',
-      date: '2 days ago',
+      title: 'Supplier List',
+      description: 'Manage suppliers',
+      icon: Building2,
+      href: '/supplierlist',
+      color: 'bg-purple-50 border-purple-200 hover:bg-purple-100',
+      iconColor: 'text-purple-600',
     },
   ];
-
-  const paymentReminders = [
-    {
-      customer: 'Sharma Electronics',
-      amount: '₹45,200',
-      dueDate: 'Today',
-      status: 'Called',
-    },
-    {
-      customer: 'Kumar Trading Co.',
-      amount: '₹28,900',
-      dueDate: 'Tomorrow',
-      status: 'Scheduled',
-    },
-    {
-      customer: 'Verma Enterprises',
-      amount: '₹34,800',
-      dueDate: '3 days overdue',
-      status: 'Follow-up',
-    },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completed':
-        return 'bg-green-100 text-green-700';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'Processing':
-        return 'bg-blue-100 text-blue-700';
-      case 'Overdue':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getReminderStatusColor = (status: string) => {
-    switch (status) {
-      case 'Called':
-        return 'bg-green-100 text-green-700';
-      case 'Scheduled':
-        return 'bg-blue-100 text-blue-700';
-      case 'Follow-up':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/10 to-bg/20">
+      {/* Navigation Header */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <img src={logo} alt="Simbly.ai" className="h-12 w-auto" />
+              <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
             </div>
-            <button
-              onClick={() => onNavigate('landing')}
-              className="px-6 py-2.5 rounded-full bg-white text-gray-700 font-medium hover:bg-primary hover:text-white transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              Back to Home
-            </button>
+            <div className="flex items-center space-x-3">
+              {isAuthenticated && user && (
+                <div className="text-sm text-gray-600">
+                  Welcome, {user.email}
+                </div>
+              )}
+              {isAuthenticated && (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-100 text-red-700 font-medium hover:bg-red-200 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </nav>
 
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Tab Navigation */}
+        {/* Welcome Section */}
         <div className="mb-8">
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back!</h1>
+          <p className="text-gray-600">Here's what's happening with your orders today.</p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                    <p className="text-sm text-green-600 mt-1">{stat.change}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg bg-gradient-to-r ${stat.color}`}>
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Navigation Cards */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {navigationCards.map((card, index) => {
+              const Icon = card.icon;
               return (
                 <button
-                  key={tab.id}
-                  onClick={() => {
-                    console.log('Tab clicked:', tab.id);
-                    setActiveTab(tab.id as any);
-                  }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-white text-primary shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
+                  key={index}
+                  onClick={() => navigate(card.href)}
+                  className={`p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${card.color}`}
                 >
-                  <Icon size={18} />
-                  {tab.label}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`p-3 rounded-lg ${card.color}`}>
+                        <Icon className={`h-6 w-6 ${card.iconColor}`} />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-gray-900">{card.title}</h3>
+                        <p className="text-sm text-gray-600">{card.description}</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'dashboard' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">Dashboard</h1>
-              <p className="text-gray-600">Welcome back! Here's what's happening with your orders today.</p>
-            </div>
-
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}>
-                    <Icon size={24} className="text-white" />
-                  </div>
-                  <span className={`text-sm font-semibold ${stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change}
-                  </span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-green-100 rounded-full">
+                <CheckCircle className="h-4 w-4 text-green-600" />
               </div>
-            );
-          })}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Recent Orders</h2>
-                <button className="text-primary hover:text-secondary font-medium text-sm">
-                  View All
-                </button>
-              </div>
-              <div className="space-y-4">
-                {recentOrders.map((order, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 hover:border-primary"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                          <Package size={20} className="text-white" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{order.id}</div>
-                          <div className="text-sm text-gray-600">{order.customer}</div>
-                        </div>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{order.items}</span>
-                      <span className="font-semibold text-gray-900">{order.amount}</span>
-                      <span className="text-gray-500">{order.date}</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">Order #PO-072 completed</p>
+                <p className="text-xs text-gray-500">2 hours ago</p>
               </div>
             </div>
-          </div>
-
-          <div>
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <AlertCircle size={20} className="text-accent" />
-                Payment Reminders
-              </h2>
-              <div className="space-y-3">
-                {paymentReminders.map((reminder, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-all duration-200"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="text-sm font-medium text-gray-900">
-                        {reminder.customer}
-                      </div>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getReminderStatusColor(reminder.status)}`}>
-                        {reminder.status}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 mb-1">{reminder.amount}</div>
-                    <div className="text-xs text-gray-500">{reminder.dueDate}</div>
-                  </div>
-                ))}
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <Package className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">New order #PO-073 created</p>
+                <p className="text-xs text-gray-500">4 hours ago</p>
               </div>
             </div>
-
-            <div className="bg-gradient-to-br from-primary to-secondary rounded-2xl shadow-lg p-6 text-white">
-              <h3 className="text-xl font-semibold mb-2">Need Help?</h3>
-              <p className="text-white/90 text-sm mb-4">
-                Our support team is available 24/7 via WhatsApp
-              </p>
-              <button className="w-full px-4 py-2.5 bg-white text-primary font-semibold rounded-full hover:shadow-lg transition-all duration-200">
-                Contact Support
-              </button>
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-yellow-100 rounded-full">
+                <Clock className="h-4 w-4 text-yellow-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">Order #PO-071 pending approval</p>
+                <p className="text-xs text-gray-500">6 hours ago</p>
+              </div>
             </div>
           </div>
         </div>
-
-        <div className="mt-8 grid md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                <DollarSign size={20} className="text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Collections</h3>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">₹8.2L</div>
-            <div className="text-sm text-gray-600">Collected this month</div>
-            <div className="mt-4 text-sm text-green-600 font-medium">+15% from last month</div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-secondary to-cyan-400 rounded-lg flex items-center justify-center">
-                <Users size={20} className="text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Active Customers</h3>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">142</div>
-            <div className="text-sm text-gray-600">Ordered this month</div>
-            <div className="mt-4 text-sm text-green-600 font-medium">+8 new customers</div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                <LayoutDashboard size={20} className="text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Automation Rate</h3>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">94%</div>
-            <div className="text-sm text-gray-600">Orders fully automated</div>
-            <div className="mt-4 text-sm text-green-600 font-medium">Time saved: 12.5 hrs/week</div>
-          </div>
-        </div>
-          </>
-        )}
-
-        {activeTab === 'po-list' && (
-          <div>
-            <h1 className="text-2xl font-bold mb-4">PO List Tab Active</h1>
-            <POList />
-          </div>
-        )}
-        {activeTab === 'consignee-list' && <ConsigneeList />}
-        {activeTab === 'supplier-list' && <SupplierList />}
       </div>
     </div>
   );

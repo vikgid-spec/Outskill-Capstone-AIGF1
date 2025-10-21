@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 interface ValidationState {
@@ -16,11 +17,8 @@ interface PasswordRequirements {
   hasLowercase: boolean;
 }
 
-interface SignUpPageProps {
-  onNavigate?: (section: string) => void;
-}
-
-export default function SignUpPage({ onNavigate }: SignUpPageProps) {
+export default function SignUpPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -550,7 +548,7 @@ export default function SignUpPage({ onNavigate }: SignUpPageProps) {
                 type="button"
                 className="font-semibold hover:underline"
                 style={{ color: '#696FC7' }}
-                onClick={() => onNavigate?.('login')}
+                onClick={() => navigate('/login')}
               >
                 Log in
               </button>

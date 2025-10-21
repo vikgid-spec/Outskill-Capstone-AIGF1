@@ -1,5 +1,6 @@
 import { Users, Search, Filter, Plus, Eye, Edit, Trash2, MapPin, Phone, Mail, Package, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import AddConsigneeModal from './AddConsigneeModal';
 
 interface Consignee {
   Consignee_id: string;
@@ -14,6 +15,7 @@ export default function ConsigneeList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Fetch consignee data using direct API call (working approach)
   useEffect(() => {
@@ -59,6 +61,42 @@ export default function ConsigneeList() {
 
     fetchConsignees();
   }, []);
+
+  const handleConsigneeAdded = () => {
+    // Refresh the consignee list
+    const refreshData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const apiUrl = 'https://smhmuegdoucznluneftm.supabase.co/rest/v1/Hawa_Consignee?select=Consignee_id,Consignee_name,Consignee_address,Consignee_GSTIN&order=Consignee_id';
+        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaG11ZWdkb3Vjem5sdW5lZnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjMxNTYsImV4cCI6MjA3NTQ5OTE1Nn0.dBcCg_esHz5UbHyAaccYUUlZevcykXzL6Cnb-2PltZ8';
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': apiKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setConsigneeList(data);
+        setLastFetchTime(new Date());
+      } catch (err) {
+        console.error('Refresh error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to refresh');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    refreshData();
+  };
 
   const filteredConsignees = consigneeList.filter(consignee => {
     const matchesSearch = consignee.Consignee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,7 +161,10 @@ export default function ConsigneeList() {
           >
             🔄 Refresh
           </button>
-          <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-lg">
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-lg"
+          >
             <Plus size={20} />
             Add New Consignee
           </button>
@@ -294,6 +335,13 @@ export default function ConsigneeList() {
           </div>
         )}
       </div>
+
+      {/* Add Consignee Modal */}
+      <AddConsigneeModal 
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={handleConsigneeAdded}
+      />
     </div>
   );
 }

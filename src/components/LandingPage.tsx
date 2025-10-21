@@ -6,16 +6,11 @@ import Testimonials from './Testimonials';
 import Pricing from './Pricing';
 import FAQ from './FAQ';
 import Footer from './Footer';
-import { supabase } from '../lib/supabase'
 
-interface LandingPageProps {
-  onNavigate: (section: string) => void;
-}
-
-export default function LandingPage({ onNavigate }: LandingPageProps) {
+export default function LandingPage() {
   return (
     <div className="min-h-screen">
-      <Navigation onNavigate={onNavigate} />
+      <Navigation />
       <Hero />
       <Benefits />
       <HowItWorks />

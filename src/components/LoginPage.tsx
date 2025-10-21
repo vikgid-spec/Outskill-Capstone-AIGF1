@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LoginPageProps {
-  onNavigate: (section: string) => void;
-}
-
-export default function LoginPage({ onNavigate }: LoginPageProps) {
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -83,11 +82,8 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
     setSubmitMessage(null);
 
     try {
-      // Sign in with Supabase Auth
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      // Use the auth context login function
+      const { error } = await login(formData.email, formData.password);
 
       if (error) {
         // Handle specific error cases
@@ -110,28 +106,16 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
         return;
       }
 
-      if (data.user) {
-        // Get user details from our users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('name, username')
-          .eq('email', formData.email)
-          .limit(1);
+      // Login successful
+      setSubmitMessage({
+        type: 'success',
+        text: 'Welcome back! Redirecting to dashboard...'
+      });
 
-        if (userError) {
-          console.error('Error fetching user data:', userError);
-        }
-
-        setSubmitMessage({
-          type: 'success',
-          text: `Welcome back${userData && userData.length > 0 ? `, ${userData[0].name}` : ''}!`
-        });
-
-        // Navigate to dashboard after a brief delay
-        setTimeout(() => {
-          onNavigate('dashboard');
-        }, 1500);
-      }
+      // Navigate to dashboard after a brief delay
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
 
     } catch (error: any) {
       setSubmitMessage({
