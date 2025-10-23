@@ -112,11 +112,11 @@ export default function POList() {
   const generateDatePatterns = (timestamp?: string) => {
     const patterns = [];
     
-    // Use current date as base
+    // Use current date as base, but also include more date variations
     const baseDate = new Date();
     
-    // Generate patterns for the last 7 days (including today)
-    for (let i = 0; i < 7; i++) {
+    // Generate patterns for the last 30 days (including today) to catch more files
+    for (let i = 0; i < 30; i++) {
       const date = new Date(baseDate);
       date.setDate(baseDate.getDate() - i);
       
@@ -130,6 +130,11 @@ export default function POList() {
       const year = date.getFullYear();
       
       patterns.push(`${month} ${day}, ${year}`);
+      // Also add patterns without comma
+      patterns.push(`${month} ${day} ${year}`);
+      // Add patterns with different spacing
+      patterns.push(`${month}${day}, ${year}`);
+      patterns.push(`${month}${day} ${year}`);
     }
     
     return patterns;
@@ -150,13 +155,7 @@ export default function POList() {
       // Extract the numeric part from PO ID (e.g., "PO-032" -> "032")
       const numericId = poId.replace(/^PO-?/i, '');
       
-      // Allow download for POs 65 and above (flexible range for future POs)
-      const poNumber = parseInt(numericId);
-      if (poNumber < 65) {
-        throw new Error('PDF_NOT_AVAILABLE');
-      }
-      
-      console.log(`🔍 PO-${poNumber} is in allowed range (65+), attempting download...`);
+      console.log(`🔍 Attempting download for ${poId}...`);
       
       // Generate dynamic date patterns for the last 7 days
       const po = poList.find(p => p.PO_ID === poId);
@@ -184,39 +183,104 @@ export default function POList() {
       // Use signed URL approach for private bucket access
       console.log(`🔍 Using signed URL approach for private bucket...`);
       
-      // Use the same dynamic date patterns for signed URLs
-      const directPaths = [
-        // Dynamic date patterns (most recent first)
-        ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
-        // Fallback patterns
-        `Purchase Order - ${poId} -`,
-        `${poId}.pdf`,
-        `PO-${numericId}.pdf`,
-        `${numericId}.pdf`
-      ];
-      
-      for (const directPath of directPaths) {
-        try {
-          console.log(`🔍 Trying signed URL for: ${directPath}`);
-          const { data, error } = await supabase.storage
-            .from('nonpublic')
-            .createSignedUrl(directPath, 60);
+      // First, let's try to list all files in the bucket to see what's actually there
+      console.log(`🔍 Listing all files in nonpublic bucket to debug...`);
+      try {
+        const { data: fileList, error: listError } = await supabase.storage
+          .from('nonpublic')
+          .list('', { limit: 1000 });
+        
+        if (!listError && fileList) {
+          console.log(`📁 Found ${fileList.length} files in nonpublic bucket:`);
+          fileList.forEach(file => {
+            console.log(`  - ${file.name}`);
+            if (file.name.includes(poId) || file.name.includes(numericId)) {
+              console.log(`    ⭐ This file matches PO ${poId}!`);
+            }
+          });
           
-          if (!error && data?.signedUrl) {
-            console.log(`✅ Signed URL successful for: ${directPath}`);
-            foundPath = directPath;
-            signedUrl = data.signedUrl;
-            break;
+          // Look for files that contain the PO ID
+          const matchingFiles = fileList.filter(file => 
+            file.name.includes(poId) || 
+            file.name.includes(numericId) ||
+            file.name.toLowerCase().includes(poId.toLowerCase())
+          );
+          
+          if (matchingFiles.length > 0) {
+            console.log(`✅ Found ${matchingFiles.length} matching files for ${poId}:`);
+            matchingFiles.forEach(file => console.log(`  - ${file.name}`));
+            
+            // Try to download the first matching file
+            const targetFile = matchingFiles[0];
+            console.log(`🎯 Attempting to download: ${targetFile.name}`);
+            
+            const { data, error } = await supabase.storage
+              .from('nonpublic')
+              .createSignedUrl(targetFile.name, 60);
+            
+            if (!error && data?.signedUrl) {
+              foundPath = targetFile.name;
+              signedUrl = data.signedUrl;
+              console.log(`✅ Successfully got signed URL for: ${targetFile.name}`);
+            } else {
+              console.log(`❌ Failed to get signed URL for ${targetFile.name}: ${error?.message}`);
+            }
           } else {
-            console.log(`❌ Signed URL failed for: ${directPath} - ${error?.message || 'No signed URL received'}`);
+            console.log(`❌ No files found matching PO ${poId} in the bucket`);
           }
-        } catch (err) {
-          console.log(`❌ Error with signed URL for ${directPath}:`, err);
+        } else {
+          console.log(`❌ Failed to list files in bucket: ${listError?.message}`);
+        }
+      } catch (listErr) {
+        console.log(`❌ Error listing bucket contents:`, listErr);
+      }
+      
+      // If we didn't find a file through listing, try the original pattern matching approach
+      if (!foundPath) {
+        console.log(`🔍 Falling back to pattern matching approach...`);
+        
+        // Use the same dynamic date patterns for signed URLs
+        const directPaths = [
+          // Dynamic date patterns (most recent first)
+          ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
+          // More variations with different spacing and formatting
+          ...datePatterns.map(date => `Purchase Order - ${poId} - Greentex paper mill - ${date}.pdf`),
+          ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date}.pdf`),
+          ...datePatterns.map(date => `Purchase Order-${poId}-Greentex paper mill-${date}.pdf`),
+          // Fallback patterns
+          `Purchase Order - ${poId} -`,
+          `Purchase Order - ${poId}`,
+          `${poId}.pdf`,
+          `PO-${numericId}.pdf`,
+          `${numericId}.pdf`,
+          // Try without spaces
+          `PurchaseOrder-${poId}.pdf`,
+          `PO${numericId}.pdf`
+        ];
+      
+        for (const directPath of directPaths) {
+          try {
+            console.log(`🔍 Trying signed URL for: ${directPath}`);
+            const { data, error } = await supabase.storage
+              .from('nonpublic')
+              .createSignedUrl(directPath, 60);
+            
+            if (!error && data?.signedUrl) {
+              console.log(`✅ Signed URL successful for: ${directPath}`);
+              foundPath = directPath;
+              signedUrl = data.signedUrl;
+              break;
+            } else {
+              console.log(`❌ Signed URL failed for: ${directPath} - ${error?.message || 'No signed URL received'}`);
+            }
+          } catch (err) {
+            console.log(`❌ Error with signed URL for ${directPath}:`, err);
+          }
         }
       }
       
       if (!foundPath) {
-        console.log(`❌ No PDF found for ${poId} in 'nonpublic' bucket`);
+        console.log(`❌ No PDF found for ${poId} in 'nonpublic' bucket after trying all methods`);
         throw new Error('PDF_NOT_FOUND');
       }
       
@@ -241,9 +305,7 @@ export default function POList() {
       let userMessage = '';
       
       if (error instanceof Error) {
-        if (error.message === 'PDF_NOT_AVAILABLE') {
-          userMessage = `📄 PDF not available for ${poId}. Only POs 65 and above have PDFs available for download.`;
-        } else if (error.message === 'PDF_NOT_FOUND') {
+        if (error.message === 'PDF_NOT_FOUND') {
           userMessage = `📄 PDF not yet generated for ${poId}. The file is not found in the storage bucket. Please contact your administrator to generate the PDF.`;
         } else if (error.message.includes('SIGNED_URL_ERROR')) {
           userMessage = `⚠️ Failed to access PDF for ${poId}. Please try again or contact support.`;
@@ -273,11 +335,30 @@ export default function POList() {
       // Extract the numeric part from PO ID (e.g., "PO-032" -> "032")
       const numericId = poId.replace(/^PO-?/i, '');
       
-      // Check for POs 65 and above (flexible range for future POs)
-      const poNumber = parseInt(numericId);
-      if (poNumber < 65) {
-        console.log(`❌ PO ${poId} not in allowed range (65+), no PDF available`);
-        return false;
+      // Remove the PO number restriction - check for all POs
+      console.log(`🔍 Checking PDF existence for ${poId} (${numericId})`);
+      
+      // First try to list files in the bucket to see what's actually there
+      try {
+        const { data: fileList, error: listError } = await supabase.storage
+          .from('nonpublic')
+          .list('', { limit: 1000 });
+        
+        if (!listError && fileList) {
+          const matchingFiles = fileList.filter(file => 
+            file.name.includes(poId) || 
+            file.name.includes(numericId) ||
+            file.name.toLowerCase().includes(poId.toLowerCase())
+          );
+          
+          if (matchingFiles.length > 0) {
+            console.log(`✅ Found ${matchingFiles.length} matching files for ${poId}:`);
+            matchingFiles.forEach(file => console.log(`  - ${file.name}`));
+            return true;
+          }
+        }
+      } catch (listErr) {
+        console.log(`⚠️ Could not list bucket contents, falling back to pattern matching`);
       }
       
       // Generate dynamic date patterns for PDF existence check
@@ -286,34 +367,31 @@ export default function POList() {
       const possiblePaths = [
         // Dynamic date patterns (most recent first)
         ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
+        ...datePatterns.map(date => `Purchase Order - ${poId} - Greentex paper mill - ${date}.pdf`),
+        ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date}.pdf`),
         // Fallback patterns
         `Purchase Order - ${poId} -`,
+        `Purchase Order - ${poId}`,
         `${poId}.pdf`,
         `PO-${numericId}.pdf`,
-        `${numericId}.pdf`
+        `${numericId}.pdf`,
+        `PurchaseOrder-${poId}.pdf`,
+        `PO${numericId}.pdf`
       ];
       
       for (const filePath of possiblePaths) {
         try {
-          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(filePath)}`;
-          const response = await fetch(publicUrl, {
-            method: 'HEAD',
-            // Add headers to avoid CORS issues
-            headers: {
-              'Accept': 'application/pdf'
-            }
-          });
+          // Try signed URL approach instead of public URL since it's a private bucket
+          const { data, error } = await supabase.storage
+            .from('nonpublic')
+            .createSignedUrl(filePath, 60);
           
-          if (response.ok) {
+          if (!error && data?.signedUrl) {
             console.log(`✅ PDF exists at: ${filePath}`);
             return true;
-          } else if (response.status === 400 || response.status === 404) {
-            // File doesn't exist, continue to next path
-            console.log(`❌ PDF not found at: ${filePath} (${response.status})`);
-            continue;
           } else {
-            // Other errors (403, 500, etc.) - log but continue
-            console.log(`⚠️ Error accessing ${filePath}: ${response.status}`);
+            // File doesn't exist, continue to next path
+            console.log(`❌ PDF not found at: ${filePath}`);
             continue;
           }
         } catch (err) {
@@ -323,7 +401,7 @@ export default function POList() {
         }
       }
       
-      console.log(`❌ No PDF found for ${poId} (POs 67-68 only)`);
+      console.log(`❌ No PDF found for ${poId}`);
       return false;
     } catch (error) {
       // Catch any unexpected errors and log them without throwing
