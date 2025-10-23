@@ -109,16 +109,14 @@ export default function POList() {
   };
 
   // Function to generate dynamic date patterns for PDF filenames
-  const generateDatePatterns = (timestamp?: string) => {
+  const generateDatePatterns = () => {
     const patterns = [];
+    const today = new Date();
     
-    // Use current date as base, but also include more date variations
-    const baseDate = new Date();
-    
-    // Generate patterns for the last 30 days (including today) to catch more files
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(baseDate);
-      date.setDate(baseDate.getDate() - i);
+    // Generate patterns for the last 7 days (including today)
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
       
       const monthNames = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -130,11 +128,6 @@ export default function POList() {
       const year = date.getFullYear();
       
       patterns.push(`${month} ${day}, ${year}`);
-      // Also add patterns without comma
-      patterns.push(`${month} ${day} ${year}`);
-      // Add patterns with different spacing
-      patterns.push(`${month}${day}, ${year}`);
-      patterns.push(`${month}${day} ${year}`);
     }
     
     return patterns;
@@ -155,10 +148,15 @@ export default function POList() {
       // Extract the numeric part from PO ID (e.g., "PO-032" -> "032")
       const numericId = poId.replace(/^PO-?/i, '');
       
-      console.log(`🔍 Attempting download for ${poId}...`);
+      // Allow download for POs 65 and above (flexible range for future POs)
+      const poNumber = parseInt(numericId);
+      if (poNumber < 65) {
+        throw new Error('PDF_NOT_AVAILABLE');
+      }
+      
+      console.log(`🔍 PO-${poNumber} is in allowed range (65+), attempting download...`);
       
       // Generate dynamic date patterns for the last 7 days
-      const po = poList.find(p => p.PO_ID === poId);
       const datePatterns = generateDatePatterns();
       console.log('📅 Generated date patterns:', datePatterns);
       
@@ -180,108 +178,97 @@ export default function POList() {
       // Skip the complex listing logic and go straight to public URL approach
       console.log(`🔍 Skipping listing approach, using public URL method directly...`);
       
-      // Use signed URL approach for private bucket access
-      console.log(`🔍 Using signed URL approach for private bucket...`);
+      // Try public URL approach first (since bucket is public and we know files exist)
+      console.log(`🔍 Trying public URL approach first...`);
       
-      // First, let's try to list all files in the bucket to see what's actually there
-      console.log(`🔍 Listing all files in nonpublic bucket to debug...`);
-      try {
-        const { data: fileList, error: listError } = await supabase.storage
-          .from('nonpublic')
-          .list('', { limit: 1000 });
-        
-        if (!listError && fileList) {
-          console.log(`📁 Found ${fileList.length} files in nonpublic bucket:`);
-          fileList.forEach(file => {
-            console.log(`  - ${file.name}`);
-            if (file.name.includes(poId) || file.name.includes(numericId)) {
-              console.log(`    ⭐ This file matches PO ${poId}!`);
-            }
-          });
+      // Use the same dynamic date patterns for public URLs
+      const publicPaths = [
+        // Dynamic date patterns (most recent first)
+        ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
+        // Fallback patterns
+        `Purchase Order - ${poId} -`,
+        `${poId}.pdf`,
+        `PO-${numericId}.pdf`,
+        `${numericId}.pdf`
+      ];
+      
+      for (const publicPath of publicPaths) {
+        try {
+          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(publicPath)}`;
+          console.log(`🔍 Testing public URL: ${publicUrl}`);
           
-          // Look for files that contain the PO ID
-          const matchingFiles = fileList.filter(file => 
-            file.name.includes(poId) || 
-            file.name.includes(numericId) ||
-            file.name.toLowerCase().includes(poId.toLowerCase())
-          );
-          
-          if (matchingFiles.length > 0) {
-            console.log(`✅ Found ${matchingFiles.length} matching files for ${poId}:`);
-            matchingFiles.forEach(file => console.log(`  - ${file.name}`));
-            
-            // Try to download the first matching file
-            const targetFile = matchingFiles[0];
-            console.log(`🎯 Attempting to download: ${targetFile.name}`);
-            
-            const { data, error } = await supabase.storage
-              .from('nonpublic')
-              .createSignedUrl(targetFile.name, 60);
-            
-            if (!error && data?.signedUrl) {
-              foundPath = targetFile.name;
-              signedUrl = data.signedUrl;
-              console.log(`✅ Successfully got signed URL for: ${targetFile.name}`);
-            } else {
-              console.log(`❌ Failed to get signed URL for ${targetFile.name}: ${error?.message}`);
-            }
+          // Test if the URL is accessible
+          const response = await fetch(publicUrl, { method: 'HEAD' });
+          if (response.ok) {
+            console.log(`✅ Public URL accessible: ${publicPath}`);
+            foundPath = publicPath;
+            signedUrl = publicUrl;
+            break;
           } else {
-            console.log(`❌ No files found matching PO ${poId} in the bucket`);
+            console.log(`❌ Public URL not accessible: ${publicPath} (${response.status})`);
           }
-        } else {
-          console.log(`❌ Failed to list files in bucket: ${listError?.message}`);
+        } catch (err) {
+          console.log(`❌ Error testing public URL for ${publicPath}:`, err);
         }
-      } catch (listErr) {
-        console.log(`❌ Error listing bucket contents:`, listErr);
       }
       
-      // If we didn't find a file through listing, try the original pattern matching approach
+      // If no file found through public URLs, try signed URL approach as fallback
       if (!foundPath) {
-        console.log(`🔍 Falling back to pattern matching approach...`);
-        
+        console.log(`🔍 Public URLs failed, trying signed URL approach...`);
         // Use the same dynamic date patterns for signed URLs
         const directPaths = [
           // Dynamic date patterns (most recent first)
           ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
-          // More variations with different spacing and formatting
-          ...datePatterns.map(date => `Purchase Order - ${poId} - Greentex paper mill - ${date}.pdf`),
-          ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date}.pdf`),
-          ...datePatterns.map(date => `Purchase Order-${poId}-Greentex paper mill-${date}.pdf`),
           // Fallback patterns
           `Purchase Order - ${poId} -`,
-          `Purchase Order - ${poId}`,
           `${poId}.pdf`,
           `PO-${numericId}.pdf`,
-          `${numericId}.pdf`,
-          // Try without spaces
-          `PurchaseOrder-${poId}.pdf`,
-          `PO${numericId}.pdf`
+          `${numericId}.pdf`
         ];
-      
+        
         for (const directPath of directPaths) {
           try {
-            console.log(`🔍 Trying signed URL for: ${directPath}`);
+            console.log(`🔍 Trying direct signed URL for: ${directPath}`);
             const { data, error } = await supabase.storage
               .from('nonpublic')
               .createSignedUrl(directPath, 60);
             
             if (!error && data?.signedUrl) {
-              console.log(`✅ Signed URL successful for: ${directPath}`);
+              console.log(`✅ Direct signed URL successful for: ${directPath}`);
               foundPath = directPath;
               signedUrl = data.signedUrl;
               break;
             } else {
-              console.log(`❌ Signed URL failed for: ${directPath} - ${error?.message || 'No signed URL received'}`);
+              console.log(`❌ Direct signed URL failed for: ${directPath}`);
             }
           } catch (err) {
-            console.log(`❌ Error with signed URL for ${directPath}:`, err);
+            console.log(`❌ Error with direct signed URL for ${directPath}:`, err);
           }
+        }
+        
+        if (!foundPath) {
+          console.log(`❌ No PDF found for ${poId} in 'nonpublic' bucket`);
+          throw new Error('PDF_NOT_FOUND');
         }
       }
       
-      if (!foundPath) {
-        console.log(`❌ No PDF found for ${poId} in 'nonpublic' bucket after trying all methods`);
-        throw new Error('PDF_NOT_FOUND');
+      // Get the signed URL for the found file (if we don't already have one)
+      if (!signedUrl) {
+        console.log(`📥 Getting signed URL from 'nonpublic' bucket for: ${foundPath}`);
+        const { data, error } = await supabase.storage
+          .from('nonpublic')
+          .createSignedUrl(foundPath, 60); // 60 seconds expiry
+        
+        if (error) {
+          console.error('❌ Signed URL error from nonpublic bucket:', error);
+          throw new Error(`SIGNED_URL_ERROR: ${error.message}`);
+        }
+        
+        if (!data?.signedUrl) {
+          throw new Error('SIGNED_URL_ERROR: No signed URL received from nonpublic bucket');
+        }
+        
+        signedUrl = data.signedUrl;
       }
       
       // Create a temporary link and trigger download
@@ -305,7 +292,9 @@ export default function POList() {
       let userMessage = '';
       
       if (error instanceof Error) {
-        if (error.message === 'PDF_NOT_FOUND') {
+        if (error.message === 'PDF_NOT_AVAILABLE') {
+          userMessage = `📄 PDF not available for ${poId}. Only POs 65 and above have PDFs available for download.`;
+        } else if (error.message === 'PDF_NOT_FOUND') {
           userMessage = `📄 PDF not yet generated for ${poId}. The file is not found in the storage bucket. Please contact your administrator to generate the PDF.`;
         } else if (error.message.includes('SIGNED_URL_ERROR')) {
           userMessage = `⚠️ Failed to access PDF for ${poId}. Please try again or contact support.`;
@@ -335,30 +324,11 @@ export default function POList() {
       // Extract the numeric part from PO ID (e.g., "PO-032" -> "032")
       const numericId = poId.replace(/^PO-?/i, '');
       
-      // Remove the PO number restriction - check for all POs
-      console.log(`🔍 Checking PDF existence for ${poId} (${numericId})`);
-      
-      // First try to list files in the bucket to see what's actually there
-      try {
-        const { data: fileList, error: listError } = await supabase.storage
-          .from('nonpublic')
-          .list('', { limit: 1000 });
-        
-        if (!listError && fileList) {
-          const matchingFiles = fileList.filter(file => 
-            file.name.includes(poId) || 
-            file.name.includes(numericId) ||
-            file.name.toLowerCase().includes(poId.toLowerCase())
-          );
-          
-          if (matchingFiles.length > 0) {
-            console.log(`✅ Found ${matchingFiles.length} matching files for ${poId}:`);
-            matchingFiles.forEach(file => console.log(`  - ${file.name}`));
-            return true;
-          }
-        }
-      } catch (listErr) {
-        console.log(`⚠️ Could not list bucket contents, falling back to pattern matching`);
+      // Check for POs 65 and above (flexible range for future POs)
+      const poNumber = parseInt(numericId);
+      if (poNumber < 65) {
+        console.log(`❌ PO ${poId} not in allowed range (65+), no PDF available`);
+        return false;
       }
       
       // Generate dynamic date patterns for PDF existence check
@@ -367,31 +337,36 @@ export default function POList() {
       const possiblePaths = [
         // Dynamic date patterns (most recent first)
         ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
-        ...datePatterns.map(date => `Purchase Order - ${poId} - Greentex paper mill - ${date}.pdf`),
-        ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date}.pdf`),
         // Fallback patterns
         `Purchase Order - ${poId} -`,
-        `Purchase Order - ${poId}`,
         `${poId}.pdf`,
         `PO-${numericId}.pdf`,
-        `${numericId}.pdf`,
-        `PurchaseOrder-${poId}.pdf`,
-        `PO${numericId}.pdf`
+        `${numericId}.pdf`
       ];
       
       for (const filePath of possiblePaths) {
         try {
-          // Try signed URL approach instead of public URL since it's a private bucket
-          const { data, error } = await supabase.storage
-            .from('nonpublic')
-            .createSignedUrl(filePath, 60);
+          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(filePath)}`;
           
-          if (!error && data?.signedUrl) {
+          // Test if the URL is accessible with proper error handling
+          const response = await fetch(publicUrl, { 
+            method: 'HEAD',
+            // Add headers to avoid CORS issues
+            headers: {
+              'Accept': 'application/pdf'
+            }
+          });
+          
+          if (response.ok) {
             console.log(`✅ PDF exists at: ${filePath}`);
             return true;
-          } else {
+          } else if (response.status === 400 || response.status === 404) {
             // File doesn't exist, continue to next path
-            console.log(`❌ PDF not found at: ${filePath}`);
+            console.log(`❌ PDF not found at: ${filePath} (${response.status})`);
+            continue;
+          } else {
+            // Other errors (403, 500, etc.) - log but continue
+            console.log(`⚠️ Error accessing ${filePath}: ${response.status}`);
             continue;
           }
         } catch (err) {
@@ -401,7 +376,7 @@ export default function POList() {
         }
       }
       
-      console.log(`❌ No PDF found for ${poId}`);
+      console.log(`❌ No PDF found for ${poId} (POs 67-68 only)`);
       return false;
     } catch (error) {
       // Catch any unexpected errors and log them without throwing
@@ -495,38 +470,19 @@ export default function POList() {
         'PO-065.pdf'
       ];
       
-      // Use public URL approach first
       for (const fileName of testFiles) {
         try {
           const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(fileName)}`;
-          console.log(`🔍 Testing public URL: ${publicUrl}`);
+          console.log(`🔍 Testing: ${fileName}`);
           
           const response = await fetch(publicUrl, { method: 'HEAD' });
           if (response.ok) {
-            console.log(`✅ Found via public URL: ${fileName}`);
+            console.log(`✅ Found: ${fileName} (${response.status})`);
           } else {
-            console.log(`❌ Not found via public URL: ${fileName} (${response.status})`);
+            console.log(`❌ Not found: ${fileName} (${response.status})`);
           }
         } catch (err) {
-          console.log(`❌ Error with public URL for ${fileName}:`, err);
-        }
-      }
-      
-      // Also try signed URL approach for private bucket
-      for (const fileName of testFiles) {
-        try {
-          console.log(`🔍 Testing signed URL for: ${fileName}`);
-          const { data, error } = await supabase.storage
-            .from('nonpublic')
-            .createSignedUrl(fileName, 60);
-          
-          if (!error && data?.signedUrl) {
-            console.log(`✅ Found: ${fileName}`);
-          } else {
-            console.log(`❌ Not found: ${fileName} - ${error?.message || 'No signed URL received'}`);
-          }
-        } catch (err) {
-          console.log(`❌ Error with signed URL for ${fileName}:`, err);
+          console.log(`❌ Error testing ${fileName}:`, err);
         }
       }
       
@@ -556,7 +512,7 @@ export default function POList() {
         if (error) {
           console.log(`❌ ${path}: ${error.message}`);
         } else {
-          console.log(`✅ ${path}: Found!`);
+          console.log(`✅ ${path}: Success!`);
           return path;
         }
       } catch (err) {
