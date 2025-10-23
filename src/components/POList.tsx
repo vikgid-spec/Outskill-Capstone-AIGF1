@@ -296,6 +296,7 @@ export default function POList() {
       for (const filePath of possiblePaths) {
         try {
           const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(filePath)}`;
+          const response = await fetch(publicUrl, {
             method: 'HEAD',
             // Add headers to avoid CORS issues
             headers: {
