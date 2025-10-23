@@ -109,14 +109,16 @@ export default function POList() {
   };
 
   // Function to generate dynamic date patterns for PDF filenames
-  const generateDatePatterns = () => {
+  const generateDatePatterns = (timestamp?: string) => {
     const patterns = [];
-    const today = new Date();
+    
+    // Use the provided timestamp or fall back to current date
+    const baseDate = timestamp ? new Date(timestamp + 'Z') : new Date();
     
     // Generate patterns for the last 7 days (including today)
     for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() - i);
       
       const monthNames = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -157,7 +159,8 @@ export default function POList() {
       console.log(`🔍 PO-${poNumber} is in allowed range (65+), attempting download...`);
       
       // Generate dynamic date patterns for the last 7 days
-      const datePatterns = generateDatePatterns();
+      const po = poList.find(p => p.PO_ID === poId);
+      const datePatterns = generateDatePatterns(po?.Incoming_order_timestamp);
       console.log('📅 Generated date patterns:', datePatterns);
       
       // Define possible file paths in the 'nonpublic' bucket
@@ -332,7 +335,8 @@ export default function POList() {
       }
       
       // Generate dynamic date patterns for PDF existence check
-      const datePatterns = generateDatePatterns();
+      const po = poList.find(p => p.PO_ID === poId);
+      const datePatterns = generateDatePatterns(po?.Incoming_order_timestamp);
       
       const possiblePaths = [
         // Dynamic date patterns (most recent first)
