@@ -420,24 +420,17 @@ export default function POList() {
         'PO-065.pdf'
       ];
       // Use signed URL approach for private bucket
-      for (const filePath of possiblePaths) {
       for (const fileName of testFiles) {
-          console.log(`🔍 Testing signed URL for: ${filePath}`);
-          const { data, error } = await supabase.storage
-            .from('nonpublic')
           console.log(`🔍 Testing signed URL for: ${fileName}`);
           const { data, error } = await supabase.storage
             .from('nonpublic')
+            .createSignedUrl(fileName, 60);
+          
           if (!error && data?.signedUrl) {
             console.log(`✅ Found: ${fileName}`);
           } else {
-            console.log(`❌ PDF not found at: ${filePath} - ${error?.message || 'No signed URL received'}`);
             console.log(`❌ Not found: ${fileName} - ${error?.message || 'No signed URL received'}`);
           }
-        } catch (err) {
-          console.log(`❌ Error testing signed URL for ${filePath}:`, err);
-          continue;
-        }
       }
       
     } catch (error) {
