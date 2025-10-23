@@ -436,20 +436,6 @@ export default function POList() {
       
       // Also try signed URL approach for private bucket
       for (const fileName of testFiles) {
-          console.log(`🔍 Testing signed URL for: ${fileName}`);
-          const { data, error } = await supabase.storage
-            .from('nonpublic')
-            .createSignedUrl(fileName, 60);
-          
-          // Test if the URL is accessible with proper error handling
-          const response = await fetch(publicUrl, { 
-            method: 'HEAD',
-            // Add headers to avoid CORS issues
-            headers: {
-              'Accept': 'application/pdf'
-            }
-          });
-          
         try {
           console.log(`🔍 Testing signed URL for: ${fileName}`);
           const { data, error } = await supabase.storage
@@ -492,8 +478,7 @@ export default function POList() {
         if (error) {
           console.log(`❌ ${path}: ${error.message}`);
         } else {
-          // Network or other errors - log and continue to next path
-          console.log(`❌ Network error checking ${filePath}:`, err);
+          console.log(`✅ ${path}: Found!`);
           return path;
         }
       } catch (err) {
