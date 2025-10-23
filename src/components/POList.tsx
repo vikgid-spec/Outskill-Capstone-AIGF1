@@ -181,11 +181,11 @@ export default function POList() {
       // Skip the complex listing logic and go straight to public URL approach
       console.log(`🔍 Skipping listing approach, using public URL method directly...`);
       
-      // Try public URL approach first (since bucket is public and we know files exist)
-      console.log(`🔍 Trying public URL approach first...`);
+      // Use signed URL approach for private bucket access
+      console.log(`🔍 Using signed URL approach for private bucket...`);
       
-      // Use the same dynamic date patterns for public URLs
-      const publicPaths = [
+      // Use the same dynamic date patterns for signed URLs
+      const directPaths = [
         // Dynamic date patterns (most recent first)
         ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
         // Fallback patterns
@@ -195,83 +195,29 @@ export default function POList() {
         `${numericId}.pdf`
       ];
       
-      for (const publicPath of publicPaths) {
+      for (const directPath of directPaths) {
         try {
-          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(publicPath)}`;
-          console.log(`🔍 Testing public URL: ${publicUrl}`);
+          console.log(`🔍 Trying signed URL for: ${directPath}`);
+          const { data, error } = await supabase.storage
+            .from('nonpublic')
+            .createSignedUrl(directPath, 60);
           
-          // Test if the URL is accessible
-          const response = await fetch(publicUrl, { method: 'HEAD' });
-          if (response.ok) {
-            console.log(`✅ Public URL accessible: ${publicPath}`);
-            foundPath = publicPath;
-            signedUrl = publicUrl;
+          if (!error && data?.signedUrl) {
+            console.log(`✅ Signed URL successful for: ${directPath}`);
+            foundPath = directPath;
+            signedUrl = data.signedUrl;
             break;
           } else {
-            console.log(`❌ Public URL not accessible: ${publicPath} (${response.status})`);
+            console.log(`❌ Signed URL failed for: ${directPath} - ${error?.message || 'No signed URL received'}`);
           }
         } catch (err) {
-          console.log(`❌ Error testing public URL for ${publicPath}:`, err);
+          console.log(`❌ Error with signed URL for ${directPath}:`, err);
         }
       }
       
-      // If no file found through public URLs, try signed URL approach as fallback
       if (!foundPath) {
-        console.log(`🔍 Public URLs failed, trying signed URL approach...`);
-        // Use the same dynamic date patterns for signed URLs
-        const directPaths = [
-          // Dynamic date patterns (most recent first)
-          ...datePatterns.map(date => `Purchase Order - ${poId} -Greentex paper mill - ${date} .pdf`),
-          // Fallback patterns
-          `Purchase Order - ${poId} -`,
-          `${poId}.pdf`,
-          `PO-${numericId}.pdf`,
-          `${numericId}.pdf`
-        ];
-        
-        for (const directPath of directPaths) {
-          try {
-            console.log(`🔍 Trying direct signed URL for: ${directPath}`);
-            const { data, error } = await supabase.storage
-              .from('nonpublic')
-              .createSignedUrl(directPath, 60);
-            
-            if (!error && data?.signedUrl) {
-              console.log(`✅ Direct signed URL successful for: ${directPath}`);
-              foundPath = directPath;
-              signedUrl = data.signedUrl;
-              break;
-            } else {
-              console.log(`❌ Direct signed URL failed for: ${directPath}`);
-            }
-          } catch (err) {
-            console.log(`❌ Error with direct signed URL for ${directPath}:`, err);
-          }
-        }
-        
-        if (!foundPath) {
-          console.log(`❌ No PDF found for ${poId} in 'nonpublic' bucket`);
-          throw new Error('PDF_NOT_FOUND');
-        }
-      }
-      
-      // Get the signed URL for the found file (if we don't already have one)
-      if (!signedUrl) {
-        console.log(`📥 Getting signed URL from 'nonpublic' bucket for: ${foundPath}`);
-        const { data, error } = await supabase.storage
-          .from('nonpublic')
-          .createSignedUrl(foundPath, 60); // 60 seconds expiry
-        
-        if (error) {
-          console.error('❌ Signed URL error from nonpublic bucket:', error);
-          throw new Error(`SIGNED_URL_ERROR: ${error.message}`);
-        }
-        
-        if (!data?.signedUrl) {
-          throw new Error('SIGNED_URL_ERROR: No signed URL received from nonpublic bucket');
-        }
-        
-        signedUrl = data.signedUrl;
+        console.log(`❌ No PDF found for ${poId} in 'nonpublic' bucket`);
+        throw new Error('PDF_NOT_FOUND');
       }
       
       // Create a temporary link and trigger download
@@ -473,20 +419,24 @@ export default function POList() {
         'PO-066.pdf',
         'PO-065.pdf'
       ];
-      
+      // Use signed URL approach for private bucket
+      for (const filePath of possiblePaths) {
       for (const fileName of testFiles) {
-        try {
-          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(fileName)}`;
-          console.log(`🔍 Testing: ${fileName}`);
-          
-          const response = await fetch(publicUrl, { method: 'HEAD' });
-          if (response.ok) {
-            console.log(`✅ Found: ${fileName} (${response.status})`);
+          console.log(`🔍 Testing signed URL for: ${filePath}`);
+          const { data, error } = await supabase.storage
+            .from('nonpublic')
+          console.log(`🔍 Testing signed URL for: ${fileName}`);
+          const { data, error } = await supabase.storage
+            .from('nonpublic')
+          if (!error && data?.signedUrl) {
+            console.log(`✅ Found: ${fileName}`);
           } else {
-            console.log(`❌ Not found: ${fileName} (${response.status})`);
+            console.log(`❌ PDF not found at: ${filePath} - ${error?.message || 'No signed URL received'}`);
+            console.log(`❌ Not found: ${fileName} - ${error?.message || 'No signed URL received'}`);
           }
         } catch (err) {
-          console.log(`❌ Error testing ${fileName}:`, err);
+          console.log(`❌ Error testing signed URL for ${filePath}:`, err);
+          continue;
         }
       }
       
