@@ -112,8 +112,8 @@ export default function POList() {
   const generateDatePatterns = (timestamp?: string) => {
     const patterns = [];
     
-    // Use the provided timestamp or fall back to current date
-    const baseDate = timestamp ? new Date(timestamp + 'Z') : new Date();
+    // Use current date as base
+    const baseDate = new Date();
     
     // Generate patterns for the last 7 days (including today)
     for (let i = 0; i < 7; i++) {
@@ -160,7 +160,7 @@ export default function POList() {
       
       // Generate dynamic date patterns for the last 7 days
       const po = poList.find(p => p.PO_ID === poId);
-      const datePatterns = generateDatePatterns(po?.Incoming_order_timestamp);
+      const datePatterns = generateDatePatterns();
       console.log('📅 Generated date patterns:', datePatterns);
       
       // Define possible file paths in the 'nonpublic' bucket
@@ -281,8 +281,7 @@ export default function POList() {
       }
       
       // Generate dynamic date patterns for PDF existence check
-      const po = poList.find(p => p.PO_ID === poId);
-      const datePatterns = generateDatePatterns(po?.Incoming_order_timestamp);
+      const datePatterns = generateDatePatterns();
       
       const possiblePaths = [
         // Dynamic date patterns (most recent first)
@@ -297,9 +296,6 @@ export default function POList() {
       for (const filePath of possiblePaths) {
         try {
           const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(filePath)}`;
-          
-          // Test if the URL is accessible with proper error handling
-          const response = await fetch(publicUrl, { 
             method: 'HEAD',
             // Add headers to avoid CORS issues
             headers: {
@@ -419,8 +415,41 @@ export default function POList() {
         'PO-066.pdf',
         'PO-065.pdf'
       ];
-      // Use signed URL approach for private bucket
+      
+      // Use public URL approach first
       for (const fileName of testFiles) {
+        try {
+          const publicUrl = `${supabase.supabaseUrl}/storage/v1/object/public/nonpublic/${encodeURIComponent(fileName)}`;
+          console.log(`🔍 Testing public URL: ${publicUrl}`);
+          
+          const response = await fetch(publicUrl, { method: 'HEAD' });
+          if (response.ok) {
+            console.log(`✅ Found via public URL: ${fileName}`);
+          } else {
+            console.log(`❌ Not found via public URL: ${fileName} (${response.status})`);
+          }
+        } catch (err) {
+          console.log(`❌ Error with public URL for ${fileName}:`, err);
+        }
+      }
+      
+      // Also try signed URL approach for private bucket
+      for (const fileName of testFiles) {
+          console.log(`🔍 Testing signed URL for: ${fileName}`);
+          const { data, error } = await supabase.storage
+            .from('nonpublic')
+            .createSignedUrl(fileName, 60);
+          
+          // Test if the URL is accessible with proper error handling
+          const response = await fetch(publicUrl, { 
+            method: 'HEAD',
+            // Add headers to avoid CORS issues
+            headers: {
+              'Accept': 'application/pdf'
+            }
+          });
+          
+        try {
           console.log(`🔍 Testing signed URL for: ${fileName}`);
           const { data, error } = await supabase.storage
             .from('nonpublic')
@@ -431,6 +460,9 @@ export default function POList() {
           } else {
             console.log(`❌ Not found: ${fileName} - ${error?.message || 'No signed URL received'}`);
           }
+        } catch (err) {
+          console.log(`❌ Error with signed URL for ${fileName}:`, err);
+        }
       }
       
     } catch (error) {
@@ -459,7 +491,8 @@ export default function POList() {
         if (error) {
           console.log(`❌ ${path}: ${error.message}`);
         } else {
-          console.log(`✅ ${path}: Success!`);
+          // Network or other errors - log and continue to next path
+          console.log(`❌ Network error checking ${filePath}:`, err);
           return path;
         }
       } catch (err) {
