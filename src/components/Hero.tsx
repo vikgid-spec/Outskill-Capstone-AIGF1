@@ -79,7 +79,7 @@ export default function Hero() {
                 <img
                   src={poCreated}
                   alt="Business owner happy after PO is automatically created"
-                  className="w-full h-120 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-2">
