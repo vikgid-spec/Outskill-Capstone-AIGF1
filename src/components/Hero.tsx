@@ -55,12 +55,6 @@ export default function Hero() {
                   className="w-full h-80 object-cover"
                 />
                 <div className="p-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    {/* <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div> */}
-                    {/* <span className="text-red-600 font-semibold text-sm">BEFORE</span> */}
-                  </div>
-                  {/* <h3 className="font-bold text-gray-900 mb-2">Manual Order Processing</h3> */}
-                  {/* <p className="text-gray-600 text-sm">Stressed, time-consuming, error-prone</p> */}
                 </div>
               </div>
             </div>
@@ -82,12 +76,6 @@ export default function Hero() {
                   className="w-full h-80 object-cover"
                 />
                 <div className="p-6">
-                  {/* <div className="flex items-center gap-3 mb-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-green-600 font-semibold text-sm">AFTER</span>
-                  </div> */}
-                  {/* <h3 className="font-bold text-gray-900 mb-2">Automated with Simbly.ai</h3>
-                  <p className="text-gray-600 text-sm">Happy, efficient, error-free</p> */}
                 </div>
               </div>
             </div>
