@@ -16,14 +16,10 @@ export default function Hero() {
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               Save 10+ hours weekly and cut errors by 70%.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex justify-center">
               <button className="px-8 py-4 bg-primary text-white font-semibold rounded-full shadow-[0_8px_24px_rgba(30,90,125,0.35)] hover:shadow-[0_12px_32px_rgba(30,90,125,0.45)] transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 hover:bg-[#174864]">
                 Book a Demo
                 <ArrowRight size={20} />
-              </button>
-              <button className="px-8 py-4 bg-white text-primary font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border-2 border-primary flex items-center justify-center gap-2">
-                <Play size={20} />
-                Watch How it Works
               </button>
             </div>
             <div className="mt-8 flex items-center gap-8">
