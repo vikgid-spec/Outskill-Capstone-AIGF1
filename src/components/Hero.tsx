@@ -59,8 +59,8 @@ export default function Hero() {
                     <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                     <span className="text-red-600 font-semibold text-sm">BEFORE</span>
                   </div>
-          /*       <h3 className="font-bold text-gray-900 mb-2">Manual Order Processing</h3> */
-           /*      <p className="text-gray-600 text-sm">Stressed, time-consuming, error-prone</p> */
+                  {/* <h3 className="font-bold text-gray-900 mb-2">Manual Order Processing</h3> */}
+                  {/* <p className="text-gray-600 text-sm">Stressed, time-consuming, error-prone</p> */}
                 </div>
               </div>
             </div>
