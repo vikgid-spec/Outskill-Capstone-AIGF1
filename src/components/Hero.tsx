@@ -54,8 +54,6 @@ export default function Hero() {
                   alt="Business owner receiving order details on WhatsApp - looking stressed"
                   className="w-full h-80 object-cover"
                 />
-                <div className="p-6">
-                </div>
               </div>
             </div>
 
@@ -75,8 +73,6 @@ export default function Hero() {
                   alt="Business owner happy after PO is automatically created"
                   className="w-full h-80 object-cover"
                 />
-                <div className="p-6">
-                </div>
               </div>
             </div>
           </div>
