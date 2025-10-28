@@ -48,11 +48,11 @@ export default function Hero() {
             {/* Before - Order Received */}
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-red-400 to-orange-400 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden p-0">
                 <img
                   src={orderReceived}
                   alt="Business owner receiving order details on WhatsApp - looking stressed"
-                  className="w-full h-80 object-contain"
+                  className="w-full h-80 object-contain block"
                 />
               </div>
             </div>
@@ -67,11 +67,11 @@ export default function Hero() {
             {/* After - PO Created */}
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-blue-400 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden p-0">
                 <img
                   src={poCreated}
                   alt="Business owner happy after PO is automatically created"
-                  className="w-full h-80 object-contain"
+                  className="w-full h-80 object-contain block"
                 />
               </div>
             </div>
