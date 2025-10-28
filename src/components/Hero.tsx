@@ -52,7 +52,7 @@ export default function Hero() {
                 <img
                   src={orderReceived}
                   alt="Business owner receiving order details on WhatsApp - looking stressed"
-                  className="w-full h-80 object-cover"
+                  className="w-full h-80 object-contain"
                 />
               </div>
             </div>
@@ -71,7 +71,7 @@ export default function Hero() {
                 <img
                   src={poCreated}
                   alt="Business owner happy after PO is automatically created"
-                  className="w-full h-80 object-cover"
+                  className="w-full h-80 object-contain"
                 />
               </div>
             </div>
