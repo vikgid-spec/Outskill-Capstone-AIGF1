@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import POListPage from './components/POListPage';
 import ConsigneeListPage from './components/ConsigneeListPage';
 import SupplierListPage from './components/SupplierListPage';
+import DebtorListPage from './components/DebtorListPage';
 import SignUpPage from './components/SignUpPage';
 import LoginPage from './components/LoginPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -94,6 +95,11 @@ function App() {
           <Route path="/supplierlist" element={
             <ProtectedRoute>
               <SupplierListPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/debtorlist" element={
+            <ProtectedRoute>
+              <DebtorListPage />
             </ProtectedRoute>
           } />
           

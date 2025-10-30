@@ -1,4 +1,4 @@
-import { Package, Clock, CheckCircle, TrendingUp, Users, Building2, LogOut, ArrowRight } from 'lucide-react';
+import { Package, Clock, CheckCircle, TrendingUp, Users, Building2, LogOut, ArrowRight, CreditCard } from 'lucide-react';
 import logo from '../assets/Simbly-logo copy.jpg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -68,6 +68,14 @@ export default function Dashboard() {
       color: 'bg-purple-50 border-purple-200 hover:bg-purple-100',
       iconColor: 'text-purple-600',
     },
+    {
+      title: 'Debtor List',
+      description: 'Manage debtors',
+      icon: CreditCard,
+      href: '/debtorlist',
+      color: 'bg-orange-50 border-orange-200 hover:bg-orange-100',
+      iconColor: 'text-orange-600',
+    },
   ];
 
   return (
@@ -132,7 +140,7 @@ export default function Dashboard() {
         {/* Navigation Cards */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {navigationCards.map((card, index) => {
               const Icon = card.icon;
               return (
