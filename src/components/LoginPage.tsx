@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function LoginPage() {
+  // Set page title
+  useEffect(() => {
+    document.title = 'Login | SiMBly';
+  }, []);
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -171,14 +176,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ backgroundColor: '#F5D3C4' }}>
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      {/* Background Video */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <video
+          className="w-full h-full object-cover opacity-90"
+          src="/background-video-1.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      </div>
+
+      {/* Content Layer */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
           {/* Back Button */}
           <button
-            onClick={() => onNavigate('landing')}
-            className="flex items-center text-sm mb-6 transition-colors"
-            style={{ color: '#696FC7' }}
+            type="button"
+            onClick={() => navigate('/home')}
+            className="flex items-center text-sm mb-6 transition-colors text-[#075480] hover:text-[#03c5dc]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home Page
@@ -186,13 +204,13 @@ export default function LoginPage() {
 
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-serif font-bold mb-4" style={{ color: '#2D2D2D' }}>
+            <h1 className="text-3xl md:text-4xl font-sans font-bold mb-4 text-[#075480]">
               Welcome Back
             </h1>
             <p className="text-gray-600 font-sans mb-2">
               Purchase Order Management System
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 font-sans">
               Sign in to your account to continue
             </p>
           </div>
@@ -201,7 +219,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#2D2D2D' }}>
+              <label className="block text-sm font-medium mb-2 font-sans text-[#075480]">
                 Email Address
               </label>
               <input
@@ -209,9 +227,8 @@ export default function LoginPage() {
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] transition-colors font-sans"
                 style={{ 
-                  focusRingColor: '#696FC7',
                   borderColor: validation.email.message ? '#F2AEBB' : undefined
                 }}
                 autoComplete="email"
@@ -225,7 +242,7 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#2D2D2D' }}>
+              <label className="block text-sm font-medium mb-2 font-sans text-[#075480]">
                 Password
               </label>
               <div className="relative">
@@ -234,9 +251,8 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] transition-colors font-sans"
                   style={{ 
-                    focusRingColor: '#696FC7',
                     borderColor: validation.password.message ? '#F2AEBB' : undefined
                   }}
                   autoComplete="current-password"
@@ -244,8 +260,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1"
-                  style={{ color: '#696FC7' }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-[#03c5dc] hover:text-[#075480] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -264,16 +279,15 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 focus:ring-2 transition-colors"
-                  style={{ accentColor: '#696FC7' }}
+                  className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-[#03c5dc] transition-colors"
+                  style={{ accentColor: '#075480' }}
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                <span className="ml-2 text-sm text-gray-600 font-sans">Remember me</span>
               </label>
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-sm font-medium hover:underline transition-colors"
-                style={{ color: '#A7AAE1' }}
+                className="text-sm font-medium hover:underline transition-colors font-sans text-[#03c5dc] hover:text-[#075480]"
               >
                 Forgot password?
               </button>
@@ -281,12 +295,12 @@ export default function LoginPage() {
 
             {/* Submit Message */}
             {submitMessage && (
-              <div className={`p-4 rounded-lg text-sm ${
+              <div className={`p-4 rounded-lg text-sm font-sans ${
                 submitMessage.type === 'success' 
                   ? 'bg-green-50 border border-green-200' 
                   : 'bg-red-50 border border-red-200'
               }`}>
-                <p style={{ color: submitMessage.type === 'success' ? '#696FC7' : '#F2AEBB' }}>
+                <p className={submitMessage.type === 'success' ? 'text-[#075480]' : 'text-red-600'}>
                   {submitMessage.text}
                 </p>
               </div>
@@ -296,8 +310,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={!isFormValid || isSubmitting}
-              className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg"
-              style={{ backgroundColor: '#696FC7' }}
+              className="w-full px-8 py-4 bg-[#075480] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-sans"
             >
               {isSubmitting ? (
                 <>
@@ -312,19 +325,18 @@ export default function LoginPage() {
 
           {/* Links */}
           <div className="mt-8 text-center space-y-3">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 font-sans">
               Don't have an account?{' '}
               <button
                 type="button"
-                className="font-semibold hover:underline transition-colors"
-                style={{ color: '#696FC7' }}
-                onClick={() => onNavigate('signup')}
+                className="font-semibold hover:underline transition-colors text-[#075480] hover:text-[#03c5dc] font-sans"
+                onClick={() => navigate('/signup')}
               >
                 Sign up
               </button>
             </p>
             
-            <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
+            <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 font-sans">
               <button
                 type="button"
                 className="hover:underline transition-colors"

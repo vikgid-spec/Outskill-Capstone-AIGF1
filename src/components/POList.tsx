@@ -1,4 +1,4 @@
-import { Package, Search, Filter, Plus, Eye, CreditCard as Edit, Trash2, Calendar, User, Download, Loader2 } from 'lucide-react';
+import { Package, Search, Eye, CreditCard as Edit, Trash2, Calendar, User, Download, Loader2, FileText, Building2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -18,54 +18,172 @@ export default function POList() {
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const [downloadingPOs, setDownloadingPOs] = useState<Set<string>>(new Set());
   const [pdfStatus, setPdfStatus] = useState<Map<string, boolean>>(new Map());
+  const [itemsToShow, setItemsToShow] = useState(25); // Start with 25 items
+  const [animatedValues, setAnimatedValues] = useState({
+    totalPOs: 0,
+    activeOrders: 0,
+    uniqueMills: 0,
+  });
 
-  // Fetch PO data using direct API call (same working approach as other components)
+  // Initial fetch + Realtime subscription
   useEffect(() => {
+    let subscription: ReturnType<typeof supabase.channel> | null = null;
+
     const fetchPOs = async () => {
       try {
         setLoading(true);
-        console.log('=== FETCHING POS VIA DIRECT API ===');
+        console.log('=== FETCHING POS VIA SUPABASE ===');
         
-        // Use the same working direct API approach
-        const apiUrl = 'https://smhmuegdoucznluneftm.supabase.co/rest/v1/Purchase_Order_List?select=PO_ID,Mill_name,Consignee_name,Incoming_order_timestamp,Outgoing_order_timestamp&order=PO_ID';
-        const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaG11ZWdkb3Vjem5sdW5lZnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjMxNTYsImV4cCI6MjA3NTQ5OTE1Nn0.dBcCg_esHz5UbHyAaccYUUlZevcykXzL6Cnb-2PltZ8';
+        // Try Supabase client first, but fallback to direct API if empty (RLS issue)
+        let data: PO[] | null = null;
+        let error: any = null;
+        let usedFallback = false;
         
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'apikey': apiKey,
-            'Content-Type': 'application/json'
+        try {
+          const result = await supabase
+            .from('Purchase_Order_List')
+            .select('PO_ID,Mill_name,Consignee_name,Incoming_order_timestamp,Outgoing_order_timestamp')
+            .order('PO_ID', { ascending: false }); // Descending order - latest first
+          
+          data = result.data;
+          error = result.error;
+          
+          if (error) {
+            console.warn('⚠️ Supabase client query failed, trying direct API fallback:', error);
+            throw error;
           }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          
+          // Check if we got empty results (likely RLS blocking)
+          if (!data || data.length === 0) {
+            console.warn('⚠️ Supabase query returned 0 records (likely RLS issue), trying direct API fallback...');
+            throw new Error('Empty results - RLS likely blocking');
+          }
+          
+          console.log('✅ Supabase client query successful');
+        } catch (supabaseError) {
+          // Fallback to direct API call (same approach as other components)
+          usedFallback = true;
+          console.log('🔄 Falling back to direct API call...');
+          
+          const apiUrl = 'https://smhmuegdoucznluneftm.supabase.co/rest/v1/Purchase_Order_List?select=PO_ID,Mill_name,Consignee_name,Incoming_order_timestamp,Outgoing_order_timestamp&order=PO_ID.desc';
+          const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaG11ZWdkb3Vjem5sdW5lZnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjMxNTYsImV4cCI6MjA3NTQ5OTE1Nn0.dBcCg_esHz5UbHyAaccYUUlZevcykXzL6Cnb-2PltZ8';
+          
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          data = await response.json();
+          console.log(`✅ Direct API call successful (fallback) - received ${data?.length || 0} records`);
         }
         
-        const data = await response.json();
         console.log('=== PO FETCH SUCCESS ===');
-        console.log('Data received:', data.length, 'records');
-        console.log('First few records:', data.slice(0, 3));
+        console.log('Data received:', data?.length || 0, 'records');
+        console.log('First few records:', data?.slice(0, 3));
         console.log('=== END PO FETCH ===');
         
-        setPoList(data);
+        if (!data || data.length === 0) {
+          console.warn('⚠️ No data received from query');
+        } else {
+          // Clear any previous errors if we got data
+          setError(null);
+        }
+        
+        setPoList(data || []);
         setLastFetchTime(new Date());
         
-        console.log('State updated - poList length:', data.length);
+        console.log('State updated - poList length:', data?.length || 0);
         console.log('State updated - lastFetchTime:', new Date().toISOString());
         
-        if (data.length > 0) {
+        if (data && data.length > 0) {
           console.log(`Successfully loaded ${data.length} purchase orders from database`);
         }
       } catch (err) {
-        console.error('Error fetching purchase orders:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch purchase orders');
+        console.error('❌ Error fetching purchase orders:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch purchase orders';
+        setError(errorMessage);
+        console.error('Full error details:', err);
       } finally {
         setLoading(false);
       }
     };
 
+    // Initial fetch
     fetchPOs();
+
+    // Set up realtime subscription
+    try {
+      subscription = supabase
+        .channel('purchase_orders_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'Purchase_Order_List',
+          },
+          (payload: any) => {
+            console.log('🔄 Realtime update received:', payload.eventType, payload);
+            
+            if (payload.eventType === 'INSERT') {
+              const newPO = payload.new as PO;
+              setPoList(prev => {
+                const updated = [newPO, ...prev];
+                // Sort by PO_ID descending to maintain order (latest first)
+                return updated.sort((a, b) => {
+                  // Extract numeric part for proper sorting (PO-101 > PO-100)
+                  const numA = parseInt(a.PO_ID.replace(/^PO-?/i, '')) || 0;
+                  const numB = parseInt(b.PO_ID.replace(/^PO-?/i, '')) || 0;
+                  return numB - numA; // Descending
+                });
+              });
+              setLastFetchTime(new Date());
+              console.log('✅ New PO added via realtime:', newPO.PO_ID);
+            } else if (payload.eventType === 'UPDATE') {
+              const updatedPO = payload.new as PO;
+              setPoList(prev => prev.map(po => 
+                po.PO_ID === updatedPO.PO_ID ? updatedPO : po
+              ));
+              setLastFetchTime(new Date());
+              console.log('✅ PO updated via realtime:', updatedPO.PO_ID);
+            } else if (payload.eventType === 'DELETE') {
+              const deletedPO = payload.old as PO;
+              setPoList(prev => prev.filter(po => 
+                po.PO_ID !== deletedPO.PO_ID
+              ));
+              setLastFetchTime(new Date());
+              console.log('✅ PO deleted via realtime:', deletedPO.PO_ID);
+            }
+          }
+        )
+        .subscribe((status: string) => {
+          console.log('📡 Realtime subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Successfully subscribed to Purchase_Order_List changes');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Realtime subscription error');
+            setError('Failed to connect to realtime updates. Please refresh the page.');
+          }
+        });
+    } catch (err) {
+      console.error('Error setting up realtime subscription:', err);
+      setError('Failed to set up realtime updates. Using regular polling instead.');
+    }
+
+    // Cleanup function
+    return () => {
+      if (subscription) {
+        console.log('🧹 Cleaning up realtime subscription');
+        supabase.removeChannel(subscription);
+      }
+    };
   }, []);
 
   // Debug: Log when poList state changes
@@ -524,7 +642,15 @@ export default function POList() {
     return null;
   };
 
-  const filteredPOs = poList.filter(po => {
+  // Sort PO list by PO_ID descending (latest first) and filter by search term
+  const sortedPOs = [...poList].sort((a, b) => {
+    // Extract numeric part for proper sorting (PO-101 > PO-100)
+    const numA = parseInt(a.PO_ID.replace(/^PO-?/i, '')) || 0;
+    const numB = parseInt(b.PO_ID.replace(/^PO-?/i, '')) || 0;
+    return numB - numA; // Descending
+  });
+
+  const filteredPOs = sortedPOs.filter(po => {
     const matchesSearch = po.PO_ID.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          po.Mill_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (po.Consignee_name && po.Consignee_name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -532,10 +658,62 @@ export default function POList() {
     return matchesSearch;
   });
 
+  // Paginate: show only itemsToShow items
+  const displayedPOs = filteredPOs.slice(0, itemsToShow);
+  const hasMore = filteredPOs.length > itemsToShow;
+
+  const handleViewNext = () => {
+    setItemsToShow(prev => prev + 25);
+  };
+
+  // Reset pagination when search term changes
+  useEffect(() => {
+    setItemsToShow(25);
+  }, [searchTerm]);
+
+  // Animate numbers on first page load
+  useEffect(() => {
+    if (poList.length === 0) return;
+    
+    const duration = 2000; // 2 seconds
+    const steps = 60;
+    const interval = duration / steps;
+
+    const totalPOs = poList.length;
+    const activeOrders = poList.length;
+    const uniqueMills = new Set(poList.map(po => po.Mill_name)).size;
+
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      const progress = Math.min(step / steps, 1);
+      // Easing function for smooth animation
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+
+      setAnimatedValues({
+        totalPOs: Math.floor(totalPOs * easeOutQuart),
+        activeOrders: Math.floor(activeOrders * easeOutQuart),
+        uniqueMills: Math.floor(uniqueMills * easeOutQuart),
+      });
+
+      if (step >= steps) {
+        clearInterval(timer);
+        // Set final values
+        setAnimatedValues({
+          totalPOs,
+          activeOrders,
+          uniqueMills,
+        });
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [poList.length]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Purchase Orders</h1>
           <p className="text-gray-600 mt-1">Manage and track all your purchase orders</p>
@@ -545,123 +723,68 @@ export default function POList() {
             </p>
           )}
         </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={async () => {
-              console.log('=== MANUAL PO REFRESH VIA DIRECT API ===');
-              try {
-                setLoading(true);
-                setError(null);
-                
-                // Use the same working direct API approach
-                const apiUrl = 'https://smhmuegdoucznluneftm.supabase.co/rest/v1/Purchase_Order_List?select=PO_ID,Mill_name,Consignee_name,Incoming_order_timestamp,Outgoing_order_timestamp&order=PO_ID';
-                const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaG11ZWdkb3Vjem5sdW5lZnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjMxNTYsImV4cCI6MjA3NTQ5OTE1Nn0.dBcCg_esHz5UbHyAaccYUUlZevcykXzL6Cnb-2PltZ8';
-                
-                const response = await fetch(apiUrl, {
-                  method: 'GET',
-                  headers: {
-                    'apikey': apiKey,
-                    'Content-Type': 'application/json'
-                  }
-                });
-                
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('=== PO REFRESH SUCCESS ===');
-                console.log('Refreshed data:', data.length, 'records');
-                console.log('First few records:', data.slice(0, 3));
-                console.log('=== END PO REFRESH ===');
-                
-                setPoList(data);
-                setLastFetchTime(new Date());
-                
-                // Re-check PDF status for all POs after refresh
-                console.log('🔄 Re-checking PDF status after refresh...');
-                const statusMap = new Map();
-                for (const po of data) {
-                  const exists = await checkPDFExists(po.PO_ID);
-                  statusMap.set(po.PO_ID, exists);
-                  console.log(`PDF status for ${po.PO_ID}: ${exists ? '✅ Exists' : '❌ Not found'}`);
-                }
-                setPdfStatus(statusMap);
-              } catch (err) {
-                console.error('PO refresh error:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            🔄 Refresh
-          </button>
-          <button 
-            onClick={async () => {
-              console.log('🔄 Manually refreshing PDF status...');
-              if (poList.length > 0) {
-                const statusMap = new Map();
-                for (const po of poList) {
-                  const exists = await checkPDFExists(po.PO_ID);
-                  statusMap.set(po.PO_ID, exists);
-                  console.log(`PDF status for ${po.PO_ID}: ${exists ? '✅ Exists' : '❌ Not found'}`);
-                }
-                setPdfStatus(statusMap);
-                alert('✅ PDF status refreshed for all POs');
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            🔄 Refresh PDF Status
-          </button>
-          <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-lg">
-            <Plus size={20} />
-            Create New PO
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-gray-900">{poList.length}</div>
-          <div className="text-sm text-gray-600">Total POs</div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-blue-600">
-            {poList.length > 0 ? poList.length : 0}
-          </div>
-          <div className="text-sm text-gray-600">Active Orders</div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-green-600">
-            {new Set(poList.map(po => po.Mill_name)).size}
-          </div>
-          <div className="text-sm text-gray-600">Unique Mills</div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#03c5dc]" />
             <input
               type="text"
               placeholder="Search by PO ID, Mill name, or Consignee..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] w-64"
             />
           </div>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Filter size={16} />
-            More Filters
-          </button>
         </div>
       </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Total POs */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">Total POs</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <Package className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.totalPOs}</div>
+          </div>
+        </div>
+
+        {/* Active Orders */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">Active Orders</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <FileText className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.activeOrders}</div>
+          </div>
+        </div>
+
+        {/* Unique Mills */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">Unique Mills</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <Building2 className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.uniqueMills}</div>
+          </div>
+        </div>
+      </div>
+
 
       {/* PO List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -729,12 +852,12 @@ export default function POList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredPOs.map((po) => (
+                {displayedPOs.map((po) => (
                   <tr key={po.PO_ID} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                          <Package size={20} className="text-white" />
+                        <div className="w-10 h-10 bg-[#f6f6f6] rounded-lg flex items-center justify-center">
+                          <Package size={20} className="text-[#03c5dc]" />
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{po.PO_ID}</div>
@@ -743,7 +866,7 @@ export default function POList() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <User size={16} className="text-gray-400" />
+                        <User size={16} className="text-[#03c5dc]" />
                         <span className="text-gray-900">{po.Mill_name}</span>
                       </div>
                     </td>
@@ -757,7 +880,7 @@ export default function POList() {
                     <td className="px-6 py-4">
                       <div className="text-sm">
                         <div className="flex items-center gap-1">
-                          <Calendar size={14} className="text-gray-400" />
+                          <Calendar size={14} className="text-[#03c5dc]" />
                           <span className="text-gray-900">
                             {new Date(po.Incoming_order_timestamp + 'Z').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
                           </span>
@@ -770,7 +893,7 @@ export default function POList() {
                     <td className="px-6 py-4">
                       <div className="text-sm">
                         <div className="flex items-center gap-1">
-                          <Calendar size={14} className="text-gray-400" />
+                          <Calendar size={14} className="text-[#03c5dc]" />
                           <span className="text-gray-900">
                             {new Date(po.Outgoing_order_timestamp + 'Z').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
                           </span>
@@ -782,12 +905,6 @@ export default function POList() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
-                          <Eye size={16} />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-green-600 transition-colors">
-                          <Edit size={16} />
-                        </button>
                         <button 
                           onClick={async () => {
                             // Check PDF availability in real-time before attempting download
@@ -799,17 +916,14 @@ export default function POList() {
                             }
                           }}
                           disabled={downloadingPOs.has(po.PO_ID)}
-                          className={`p-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-gray-400 hover:text-purple-600`}
+                          className={`p-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[#03c5dc] hover:text-[#03c5dc]/80`}
                           title="Download PDF"
                         >
                           {downloadingPOs.has(po.PO_ID) ? (
-                            <Loader2 size={16} className="animate-spin" />
+                            <Loader2 size={24} className="animate-spin" />
                           ) : (
-                            <Download size={16} />
+                            <Download size={24} />
                           )}
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
-                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -817,6 +931,18 @@ export default function POList() {
                 ))}
               </tbody>
             </table>
+            {/* View Next Button - Bottom */}
+            {hasMore && (
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleViewNext}
+                  className="px-6 py-2 bg-white border-2 border-[#03c5dc] text-[#03c5dc] rounded-full font-medium hover:bg-[#03c5dc] hover:text-white transition-all duration-200"
+                >
+                  View Next 25
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

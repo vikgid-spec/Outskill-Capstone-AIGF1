@@ -287,15 +287,30 @@ export default function SignUpPage() {
     }
   };
 
-  // Get strength color
-  const getStrengthColor = (strength: string) => {
+  // Get strength color (for background)
+  const getStrengthBgColor = (strength: string) => {
     switch (strength) {
-      case 'weak': return '#F2AEBB';
-      case 'medium': return '#A7AAE1';
-      case 'strong': return '#696FC7';
-      default: return '#F2AEBB';
+      case 'weak': return 'bg-red-600';
+      case 'medium': return 'bg-[#03c5dc]';
+      case 'strong': return 'bg-[#075480]';
+      default: return 'bg-red-600';
     }
   };
+  
+  // Get strength text color
+  const getStrengthTextColor = (strength: string) => {
+    switch (strength) {
+      case 'weak': return 'text-red-600';
+      case 'medium': return 'text-[#03c5dc]';
+      case 'strong': return 'text-[#075480]';
+      default: return 'text-red-600';
+    }
+  };
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Sign Up | SiMBly';
+  }, []);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -305,12 +320,25 @@ export default function SignUpPage() {
   }, [usernameTimer]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ backgroundColor: '#F5D3C4' }}>
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      {/* Background Video */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <video
+          className="w-full h-full object-cover opacity-90"
+          src="/background-video-1.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      </div>
+
+      {/* Content Layer */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-serif font-bold mb-4" style={{ color: '#2D2D2D' }}>
+            <h1 className="text-3xl md:text-4xl font-sans font-bold mb-4 text-[#075480]">
               Create Account
             </h1>
             <p className="text-gray-600 font-sans mb-2">
@@ -322,7 +350,7 @@ export default function SignUpPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Field */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#2D2D2D' }}>
+              <label className="block text-sm font-medium mb-2 font-sans text-[#075480]">
                 Full Name
               </label>
               <input
@@ -330,9 +358,8 @@ export default function SignUpPage() {
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Enter your full name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] transition-colors font-sans"
                 style={{ 
-                  focusRingColor: '#696FC7',
                   borderColor: validation.name.message ? '#F2AEBB' : undefined
                 }}
               />
@@ -345,7 +372,7 @@ export default function SignUpPage() {
 
             {/* Username Field */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#2D2D2D' }}>
+              <label className="block text-sm font-medium mb-2 font-sans text-[#075480]">
                 Username
               </label>
               <input
@@ -353,21 +380,20 @@ export default function SignUpPage() {
                 value={formData.username}
                 onChange={(e) => handleInputChange('username', e.target.value)}
                 placeholder="Choose a username"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] transition-colors font-sans"
                 style={{ 
-                  focusRingColor: '#696FC7',
                   borderColor: validation.username.message && !validation.username.isValid ? '#F2AEBB' : undefined
                 }}
               />
               {formData.username && (
                 <div className="flex items-center mt-2 text-sm">
                   {validation.username.isChecking ? (
-                    <div className="flex items-center" style={{ color: '#696FC7' }}>
+                    <div className="flex items-center text-[#03c5dc] font-sans">
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Checking availability...
                     </div>
                   ) : validation.username.message ? (
-                    <div className="flex items-center" style={{ color: validation.username.isValid ? '#696FC7' : '#F2AEBB' }}>
+                    <div className={`flex items-center font-sans ${validation.username.isValid ? 'text-[#075480]' : 'text-red-600'}`}>
                       {validation.username.isValid ? (
                         <Check className="w-4 h-4 mr-2" />
                       ) : (
@@ -382,7 +408,7 @@ export default function SignUpPage() {
 
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#2D2D2D' }}>
+              <label className="block text-sm font-medium mb-2 font-sans text-[#075480]">
                 Email Address
               </label>
               <input
@@ -390,9 +416,8 @@ export default function SignUpPage() {
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] transition-colors font-sans"
                 style={{ 
-                  focusRingColor: '#696FC7',
                   borderColor: validation.email.message && !validation.email.isValid ? '#F2AEBB' : undefined
                 }}
               />
@@ -404,9 +429,8 @@ export default function SignUpPage() {
                       {' '}
                       <button
                         type="button"
-                        className="underline hover:no-underline"
-                        style={{ color: '#696FC7' }}
-                        onClick={() => {/* Navigate to login */}}
+                        className="underline hover:no-underline text-[#075480] hover:text-[#03c5dc] transition-colors font-sans"
+                        onClick={() => navigate('/login')}
                       >
                         Log in instead
                       </button>
@@ -418,7 +442,7 @@ export default function SignUpPage() {
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#2D2D2D' }}>
+              <label className="block text-sm font-medium mb-2 font-sans text-[#075480]">
                 Password
               </label>
               <div className="relative">
@@ -427,17 +451,15 @@ export default function SignUpPage() {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder="Create a strong password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 transition-colors"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] transition-colors font-sans"
                   style={{ 
-                    focusRingColor: '#696FC7',
                     borderColor: validation.password.message ? '#F2AEBB' : undefined
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1"
-                  style={{ color: '#696FC7' }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-[#03c5dc] hover:text-[#075480] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -449,58 +471,65 @@ export default function SignUpPage() {
                   <div className="flex items-center mb-2">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full transition-all duration-300"
+                        className={`h-full transition-all duration-300 ${
+                          validation.password.strength === 'weak' ? 'bg-red-600' :
+                          validation.password.strength === 'medium' ? 'bg-[#03c5dc]' :
+                          'bg-[#075480]'
+                        }`}
                         style={{
-                          backgroundColor: getStrengthColor(validation.password.strength),
                           width: validation.password.strength === 'weak' ? '33%' : 
                                  validation.password.strength === 'medium' ? '66%' : '100%'
                         }}
                       />
                     </div>
-                    <span className="ml-3 text-sm font-medium capitalize" style={{ color: getStrengthColor(validation.password.strength) }}>
+                    <span className={`ml-3 text-sm font-medium capitalize font-sans ${
+                      validation.password.strength === 'weak' ? 'text-red-600' :
+                      validation.password.strength === 'medium' ? 'text-[#03c5dc]' :
+                      'text-[#075480]'
+                    }`}>
                       {validation.password.strength}
                     </span>
                   </div>
 
                   {/* Password Requirements Checklist */}
-                  <div className="space-y-1 text-sm">
+                  <div className="space-y-1 text-sm font-sans">
                     <div className="flex items-center">
                       {passwordRequirements.minLength ? (
-                        <Check className="w-4 h-4 mr-2" style={{ color: '#696FC7' }} />
+                        <Check className="w-4 h-4 mr-2 text-[#075480]" />
                       ) : (
-                        <X className="w-4 h-4 mr-2" style={{ color: '#F2AEBB' }} />
+                        <X className="w-4 h-4 mr-2 text-red-600" />
                       )}
-                      <span style={{ color: passwordRequirements.minLength ? '#696FC7' : '#F2AEBB' }}>
+                      <span className={passwordRequirements.minLength ? 'text-[#075480]' : 'text-red-600'}>
                         Minimum 8 characters
                       </span>
                     </div>
                     <div className="flex items-center">
                       {passwordRequirements.hasNumber ? (
-                        <Check className="w-4 h-4 mr-2" style={{ color: '#696FC7' }} />
+                        <Check className="w-4 h-4 mr-2 text-[#075480]" />
                       ) : (
-                        <X className="w-4 h-4 mr-2" style={{ color: '#F2AEBB' }} />
+                        <X className="w-4 h-4 mr-2 text-red-600" />
                       )}
-                      <span style={{ color: passwordRequirements.hasNumber ? '#696FC7' : '#F2AEBB' }}>
+                      <span className={passwordRequirements.hasNumber ? 'text-[#075480]' : 'text-red-600'}>
                         At least one number
                       </span>
                     </div>
                     <div className="flex items-center">
                       {passwordRequirements.hasUppercase ? (
-                        <Check className="w-4 h-4 mr-2" style={{ color: '#696FC7' }} />
+                        <Check className="w-4 h-4 mr-2 text-[#075480]" />
                       ) : (
-                        <X className="w-4 h-4 mr-2" style={{ color: '#F2AEBB' }} />
+                        <X className="w-4 h-4 mr-2 text-red-600" />
                       )}
-                      <span style={{ color: passwordRequirements.hasUppercase ? '#696FC7' : '#F2AEBB' }}>
+                      <span className={passwordRequirements.hasUppercase ? 'text-[#075480]' : 'text-red-600'}>
                         At least one uppercase letter
                       </span>
                     </div>
                     <div className="flex items-center">
                       {passwordRequirements.hasLowercase ? (
-                        <Check className="w-4 h-4 mr-2" style={{ color: '#696FC7' }} />
+                        <Check className="w-4 h-4 mr-2 text-[#075480]" />
                       ) : (
-                        <X className="w-4 h-4 mr-2" style={{ color: '#F2AEBB' }} />
+                        <X className="w-4 h-4 mr-2 text-red-600" />
                       )}
-                      <span style={{ color: passwordRequirements.hasLowercase ? '#696FC7' : '#F2AEBB' }}>
+                      <span className={passwordRequirements.hasLowercase ? 'text-[#075480]' : 'text-red-600'}>
                         At least one lowercase letter
                       </span>
                     </div>
@@ -511,12 +540,12 @@ export default function SignUpPage() {
 
             {/* Submit Message */}
             {submitMessage && (
-              <div className={`p-4 rounded-lg text-sm ${
+              <div className={`p-4 rounded-lg text-sm font-sans ${
                 submitMessage.type === 'success' 
                   ? 'bg-green-50 border border-green-200' 
                   : 'bg-red-50 border border-red-200'
               }`}>
-                <p style={{ color: submitMessage.type === 'success' ? '#696FC7' : '#F2AEBB' }}>
+                <p className={submitMessage.type === 'success' ? 'text-[#075480]' : 'text-red-600'}>
                   {submitMessage.text}
                 </p>
               </div>
@@ -526,8 +555,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={!isFormValid || isSubmitting}
-              className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: '#F2AEBB' }}
+              className="w-full px-8 py-4 bg-[#075480] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-sans"
             >
               {isSubmitting ? (
                 <>
@@ -542,23 +570,21 @@ export default function SignUpPage() {
 
           {/* Links */}
           <div className="mt-8 text-center space-y-2">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 font-sans">
               Already have an account?{' '}
               <button
                 type="button"
-                className="font-semibold hover:underline"
-                style={{ color: '#696FC7' }}
+                className="font-semibold hover:underline transition-colors text-[#075480] hover:text-[#03c5dc] font-sans"
                 onClick={() => navigate('/login')}
               >
                 Log in
               </button>
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 font-sans">
               Forgot your password?{' '}
               <button
                 type="button"
-                className="font-semibold hover:underline"
-                style={{ color: '#A7AAE1' }}
+                className="font-semibold hover:underline transition-colors text-[#03c5dc] hover:text-[#075480] font-sans"
                 onClick={() => {/* Navigate to reset password */}}
               >
                 Reset it

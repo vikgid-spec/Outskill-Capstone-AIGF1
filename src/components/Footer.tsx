@@ -1,5 +1,5 @@
 import { Mail, MessageSquare, Linkedin, Twitter } from 'lucide-react';
-import logo from '../assets/Simbly-logo copy.jpg';
+import logo from '../assets/Logo without tagline.svg';
 import { supabase } from '../lib/supabase'
 
 

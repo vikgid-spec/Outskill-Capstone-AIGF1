@@ -1,4 +1,4 @@
-import { Users, Search, Filter, Plus, Eye, Edit, Trash2, MapPin, Phone, Mail, Package, DollarSign } from 'lucide-react';
+import { Users, Search, Plus, MapPin, FileCheck, Map } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import AddConsigneeModal from './AddConsigneeModal';
 
@@ -16,6 +16,12 @@ export default function ConsigneeList() {
   const [error, setError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [animatedValues, setAnimatedValues] = useState({
+    totalConsignees: 0,
+    withGSTIN: 0,
+    withAddress: 0,
+    states: 0,
+  });
 
   // Fetch consignee data using direct API call (working approach)
   useEffect(() => {
@@ -106,10 +112,50 @@ export default function ConsigneeList() {
     return matchesSearch;
   });
 
+  // Animate numbers on first page load
+  useEffect(() => {
+    if (consigneeList.length === 0) return;
+    
+    const duration = 2000; // 2 seconds
+    const steps = 60;
+    const interval = duration / steps;
+
+    const totalConsignees = consigneeList.length;
+    const withGSTIN = consigneeList.filter(c => c.Consignee_GSTIN && c.Consignee_GSTIN !== '').length;
+    const withAddress = consigneeList.filter(c => c.Consignee_address && c.Consignee_address !== 'EMPTY').length;
+    const states = new Set(consigneeList.map(c => c.Consignee_GSTIN?.substring(0, 2))).size;
+
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      const progress = Math.min(step / steps, 1);
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+
+      setAnimatedValues({
+        totalConsignees: Math.floor(totalConsignees * easeOutQuart),
+        withGSTIN: Math.floor(withGSTIN * easeOutQuart),
+        withAddress: Math.floor(withAddress * easeOutQuart),
+        states: Math.floor(states * easeOutQuart),
+      });
+
+      if (step >= steps) {
+        clearInterval(timer);
+        setAnimatedValues({
+          totalConsignees,
+          withGSTIN,
+          withAddress,
+          states,
+        });
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [consigneeList.length]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Consignees</h1>
           <p className="text-gray-600 mt-1">Manage your consignee database and relationships</p>
@@ -119,51 +165,20 @@ export default function ConsigneeList() {
             </p>
           )}
         </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={async () => {
-              console.log('=== MANUAL REFRESH VIA DIRECT API ===');
-              try {
-                setLoading(true);
-                setError(null);
-                
-                // Use the same working direct API approach
-                const apiUrl = 'https://smhmuegdoucznluneftm.supabase.co/rest/v1/Hawa_Consignee?select=Consignee_id,Consignee_name,Consignee_address,Consignee_GSTIN&order=Consignee_id';
-                const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtaG11ZWdkb3Vjem5sdW5lZnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjMxNTYsImV4cCI6MjA3NTQ5OTE1Nn0.dBcCg_esHz5UbHyAaccYUUlZevcykXzL6Cnb-2PltZ8';
-                
-                const response = await fetch(apiUrl, {
-                  method: 'GET',
-                  headers: {
-                    'apikey': apiKey,
-                    'Content-Type': 'application/json'
-                  }
-                });
-                
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('=== REFRESH SUCCESS ===');
-                console.log('Refreshed data:', data.length, 'records');
-                console.log('=== END REFRESH ===');
-                
-                setConsigneeList(data);
-                setLastFetchTime(new Date());
-              } catch (err) {
-                console.error('Refresh error:', err);
-                setError(err instanceof Error ? err.message : 'Failed to refresh');
-              } finally {
-                setLoading(false);
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            🔄 Refresh
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#03c5dc]" />
+            <input
+              type="text"
+              placeholder="Search by name, address, or GSTIN..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#03c5dc] focus:border-[#03c5dc] w-64"
+            />
+          </div>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-lg"
+            className="flex items-center gap-2 px-6 py-3 bg-[#03c5dc] text-white rounded-lg hover:bg-[#03c5dc]/90 transition-colors shadow-lg"
           >
             <Plus size={20} />
             Add New Consignee
@@ -172,50 +187,68 @@ export default function ConsigneeList() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-gray-900">{consigneeList.length}</div>
-          <div className="text-sm text-gray-600">Total Consignees</div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-green-600">
-            {consigneeList.filter(c => c.Consignee_GSTIN && c.Consignee_GSTIN !== '').length}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Total Consignees */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">Total Consignees</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <Users className="h-4 w-4 text-white" />
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-gray-600">With GSTIN</div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-blue-600">
-            {consigneeList.filter(c => c.Consignee_address && c.Consignee_address !== 'EMPTY').length}
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.totalConsignees}</div>
           </div>
-          <div className="text-sm text-gray-600">With Address</div>
         </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <div className="text-2xl font-bold text-purple-600">
-            {new Set(consigneeList.map(c => c.Consignee_GSTIN?.substring(0, 2))).size}
+
+        {/* With GSTIN */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">With GSTIN</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <FileCheck className="h-4 w-4 text-white" />
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-gray-600">States</div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.withGSTIN}</div>
+          </div>
+        </div>
+
+        {/* With Address */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">With Address</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <MapPin className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.withAddress}</div>
+          </div>
+        </div>
+
+        {/* States */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">States</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <Map className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.states}</div>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name, address, or GSTIN..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-          </div>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Filter size={16} />
-            More Filters
-          </button>
-        </div>
-      </div>
 
       {/* Consignee List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -277,7 +310,6 @@ export default function ConsigneeList() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Consignee Name</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Address</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">GSTIN</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -285,8 +317,8 @@ export default function ConsigneeList() {
                   <tr key={consignee.Consignee_id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                          <Users size={20} className="text-white" />
+                        <div className="w-10 h-10 bg-[#f6f6f6] rounded-lg flex items-center justify-center">
+                          <Users size={20} className="text-[#03c5dc]" />
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{consignee.Consignee_name}</div>
@@ -297,7 +329,7 @@ export default function ConsigneeList() {
                     <td className="px-6 py-4">
                       <div className="max-w-xs">
                         <div className="flex items-start gap-2 text-sm">
-                          <MapPin size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                          <MapPin size={14} className="text-[#03c5dc] mt-0.5 flex-shrink-0" />
                           <span className="text-gray-900 break-words">
                             {consignee.Consignee_address === 'EMPTY' ? (
                               <span className="text-gray-400 italic">No address provided</span>
@@ -313,19 +345,6 @@ export default function ConsigneeList() {
                         <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
                           {consignee.Consignee_GSTIN || 'N/A'}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
-                          <Eye size={16} />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-green-600 transition-colors">
-                          <Edit size={16} />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
-                          <Trash2 size={16} />
-                        </button>
                       </div>
                     </td>
                   </tr>

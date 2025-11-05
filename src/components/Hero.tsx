@@ -1,77 +1,130 @@
-import { Play, ArrowRight } from 'lucide-react';
-import orderReceived from '../assets/Order received-1 copy.jpeg';
-import poCreated from '../assets/PO created - 1 copy.jpeg';
-import { supabase } from '../lib/supabase'
-
+import { useEffect, useState } from 'react';
+import whatsappIcon from '../assets/WhatsApp.svg';
+import automationIcon from '../assets/Automation.svg';
+import productivityIcon from '../assets/Productivity.svg';
 
 export default function Hero() {
+  const [visibleCards, setVisibleCards] = useState<number[]>([]);
+
+  const cards = [
+    {
+      number: '1.',
+      title: 'Work entirely inside WhatsApp',
+      icon: null,
+      color: '#075480',
+      backgroundImage: whatsappIcon,
+    },
+    {
+      number: '2.',
+      title: 'Automate 80% of daily coordination',
+      icon: null,
+      color: '#ffb700',
+      backgroundImage: automationIcon,
+    },
+    {
+      number: '3.',
+      title: 'Boost both productivity & cash flow',
+      icon: null,
+      color: '#009480',
+      backgroundImage: productivityIcon,
+    },
+  ];
+
+  useEffect(() => {
+    // Small delay to ensure DOM is ready, then animate cards with stagger
+    const timer = setTimeout(() => {
+      cards.forEach((_, index) => {
+        setTimeout(() => {
+          setVisibleCards((prev) => {
+            if (!prev.includes(index)) {
+              return [...prev, index];
+            }
+            return prev;
+          });
+        }, index * 200); // Stagger animation: 200ms delay per card
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <section id="hero" className="relative pt-32 pb-20 px-6 min-h-screen flex items-center">
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h1 className="text-5xl md:text-6xl font-serif font-bold text-gray-900 leading-tight mb-6">
-              Turn WhatsApp messages into orders, automatically!
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Save 10+ hours weekly and cut errors by 70%.
-            </p>
-            <div className="flex justify-center">
-              <button className="px-8 py-4 bg-primary text-white font-semibold rounded-full shadow-[0_8px_24px_rgba(30,90,125,0.35)] hover:shadow-[0_12px_32px_rgba(30,90,125,0.45)] transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 hover:bg-[#174864]">
-                Book a Demo
-                <ArrowRight size={20} />
-              </button>
-            </div>
-            <div className="mt-8 flex items-center gap-8">
-              <div>
-                <div className="text-3xl font-bold text-primary">10+</div>
-                <div className="text-sm text-gray-600">Hours saved weekly</div>
-              </div>
-              <div className="w-px h-12 bg-gray-300"></div>
-              <div>
-                <div className="text-3xl font-bold text-primary">70%</div>
-                <div className="text-sm text-gray-600">Error reduction</div>
-              </div>
-              <div className="w-px h-12 bg-gray-300"></div>
-              <div>
-                <div className="text-3xl font-bold text-primary">3x</div>
-                <div className="text-sm text-gray-600">More orders</div>
-              </div>
-            </div>
-          </div>
+    <section id="hero" className="relative pt-28 pb-12 px-6 min-h-screen flex flex-col items-center justify-center">
+      <div className="max-w-7xl mx-auto relative z-10 w-full">
+        <div className="flex flex-col items-center text-center mb-8">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-bold text-[#075480] leading-tight mb-4">
+            Convert messages to POs<br />
+            <span className="text-[#009583]">and get paid faster!</span>
+          </h1>
+          <p className="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mb-6">
+            <span className="font-bold">Built for Bharat. Designed for WhatsApp-first businesses:</span> SiMBly turns WhatsApp messages into clean POs and automates payment follow-ups — without you typing a single word.
+          </p>
+          <button className="px-8 py-4 bg-[#075480] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 mb-8">
+            Book Demo
+          </button>
+        </div>
 
-          <div className="relative space-y-8">
-            {/* Before - Order Received */}
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-red-400 to-orange-400 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
-                <img
-                  src={orderReceived}
-                  alt="Business owner receiving order details on WhatsApp - looking stressed"
-                  className="w-full h-96 object-cover object-top rounded-2xl"
-                />
-              </div>
-            </div>
+        {/* Cards Container - Animate on Mount */}
+        <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+          {cards.map((card, index) => {
+            const isVisible = visibleCards.includes(index);
+            const hasBackground = card.backgroundImage !== null;
+            
+            return (
+              <div
+                key={index}
+                className={`flex-shrink-0 w-72 h-80 rounded-2xl p-6 border-2 relative ${
+                  isVisible
+                    ? 'opacity-100 translate-y-0 scale-100'
+                    : 'opacity-0 translate-y-12 scale-95'
+                } transition-all duration-700 ease-out ${
+                  hasBackground 
+                    ? 'shadow-2xl flex flex-col overflow-hidden' 
+                    : 'bg-white shadow-xl'
+                }`}
+                style={{ 
+                  borderColor: card.color,
+                  ...(hasBackground && {
+                    backgroundImage: `url(${card.backgroundImage})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                  })
+                }}
+              >
+                {/* 50% Opacity Overlay */}
+                {hasBackground && (
+                  <div 
+                    className="absolute inset-0 bg-black opacity-50 z-0"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                  />
+                )}
+                
+                {/* Content */}
+                <div className="relative z-10 flex flex-col h-full">
+                  {/* Large Number */}
+                  <div
+                    className="text-5xl font-bold mb-3"
+                    style={{ color: card.color }}
+                  >
+                    {card.number}
+                  </div>
 
-            {/* Arrow */}
-            <div className="flex justify-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-lg">
-                <ArrowRight size={24} className="text-white" />
+                  {/* Title - positioned at bottom for background image cards */}
+                  <h3
+                    className={`text-lg font-bold text-center ${
+                      hasBackground 
+                        ? 'text-white mt-auto pt-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]' 
+                        : 'mt-4'
+                    }`}
+                    style={!hasBackground ? { color: card.color } : {}}
+                  >
+                    {card.title}
+                  </h3>
+                </div>
               </div>
-            </div>
-
-            {/* After - PO Created */}
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-blue-400 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-              <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
-                <img
-                  src={poCreated}
-                  alt="Business owner happy after PO is automatically created"
-                  className="w-full h-96 object-cover object-top rounded-2xl"
-                />
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

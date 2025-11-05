@@ -1,6 +1,4 @@
 import { Check, ArrowRight } from 'lucide-react';
-import { supabase } from '../lib/supabase'
-
 
 export default function Pricing() {
   const plans = [
@@ -8,118 +6,83 @@ export default function Pricing() {
       name: 'Starter',
       price: '₹2,999',
       period: 'per month',
-      description: 'Perfect for small businesses getting started',
-      features: [
-        'WhatsApp to Purchase Order conversion',
-        'Gmail drafts integration',
-        'Up to 100 orders/month',
-        'Basic payment reminders',
-        'Email support',
-        'Single user access',
-      ],
-      cta: 'Start Free Trial',
+      desc: 'For getting started',
+      features: ['PO conversion', 'Gmail drafts', 'Up to 100 orders/mo', 'Basic reminders', 'Email support'],
       popular: false,
+      cta: 'Start trial',
+      tone: 'border-gray-200',
+      btn: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
     },
     {
       name: 'Growth',
       price: '₹6,999',
       period: 'per month',
-      description: 'For growing businesses ready to scale',
-      features: [
-        'Everything in Starter',
-        'Unlimited orders',
-        'Auto-generated debit notes',
-        'Voice AI payment reminders',
-        'Tally export integration',
-        'Multi-user dashboard (up to 5 users)',
-        'Priority email & WhatsApp support',
-        'Custom invoice templates',
-      ],
-      cta: 'Book a Demo',
+      desc: 'Scale with confidence',
+      features: ['Everything in Starter', 'Unlimited orders', 'Debit notes', 'Voice AI reminders', 'Tally export', 'Up to 5 users'],
       popular: true,
+      cta: 'Book a demo',
+      tone: 'ring-4 ring-sky-100 border-sky-200',
+      btn: 'bg-sky-600 text-white hover:bg-sky-700',
     },
     {
       name: 'Enterprise',
       price: 'Custom',
       period: 'contact us',
-      description: 'For established businesses with multiple branches',
-      features: [
-        'Everything in Growth',
-        'Unlimited users',
-        'Multi-branch support',
-        'White-label invoices',
-        'Custom workflow automation',
-        'Dedicated account manager',
-        'Advanced analytics & reports',
-        'API access',
-        'Priority phone support',
-        'Custom integrations',
-      ],
-      cta: 'Contact Sales',
+      desc: 'Advanced needs',
+      features: ['Unlimited users', 'Multi-branch', 'White-label', 'Custom workflows', 'Dedicated manager', 'API access'],
       popular: false,
+      cta: 'Contact sales',
+      tone: 'border-gray-200',
+      btn: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
     },
   ];
 
   return (
-    <section id="pricing" className="py-20 px-6 bg-gradient-to-br from-secondary/10 to-bg/20">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4">
-            Simple, transparent pricing
-          </h2>
-          <p className="text-xl text-gray-600">
-            Choose the plan that's right for your business
-          </p>
-        </div>
+    <section id="pricing" className="p-8 md:p-10">
+                  <header className="mb-6 text-left">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0c537e] leading-tight mb-4">
+          Pricing
+        </h2>
+        <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
+          Simple tiers with clear value.
+        </p>
+      </header>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:-translate-y-2 ${
-                plan.popular ? 'ring-4 ring-primary' : ''
-              }`}
-            >
-              {plan.popular && (
-                <div className="bg-gradient-to-r from-primary to-secondary text-white text-center py-2 font-semibold text-sm">
-                  MOST POPULAR
-                </div>
-              )}
-              <div className="p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                <p className="text-gray-600 text-sm mb-6">{plan.description}</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-gray-600 ml-2">/ {plan.period}</span>
-                </div>
-                <button
-                  className={`w-full py-3 rounded-full font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                    plan.popular
-                      ? 'bg-accent text-white shadow-lg hover:shadow-xl hover:scale-105'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {plan.cta}
-                  <ArrowRight size={18} />
-                </button>
-                <div className="mt-8 space-y-4">
-                  {plan.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <Check size={20} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
+      <div className="grid md:grid-cols-3 gap-6">
+        {plans.map((p) => (
+          <div
+            key={p.name}
+            className={`rounded-2xl border border-gray-200/50 bg-white/50 shadow-sm overflow-hidden ${p.tone}`}
+          >
+            {p.popular && (
+              <div className="bg-sky-50/50 text-sky-700 text-center text-xs font-medium py-2 border-b border-sky-100/50">
+                MOST POPULAR
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900">{p.name}</h3>
+              <p className="text-sm text-gray-600 mt-1">{p.desc}</p>
+              <div className="mt-4">
+                <span className="text-3xl font-bold text-gray-900">{p.price}</span>
+                <span className="text-sm text-gray-600 ml-2">/ {p.period}</span>
+              </div>
 
-        <div className="mt-12 text-center">
-          <p className="text-gray-600">
-            All plans include 14-day free trial. No credit card required.
-          </p>
-        </div>
+              <button className={`w-full mt-5 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition ${p.btn}`}>
+                {p.cta}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+
+              <ul className="mt-6 space-y-2">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
+                    <Check className="h-4 w-4 text-sky-600 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

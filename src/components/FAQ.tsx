@@ -30,13 +30,13 @@ export default function FAQ() {
   ];
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 px-6 bg-white/50">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4">
+      <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0c537e] leading-tight mb-4">
             Frequently asked questions
           </h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
             Everything you need to know about Simbly.ai
           </p>
         </div>
@@ -45,7 +45,7 @@ export default function FAQ() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="bg-gradient-to-br from-bg/20 to-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg"
+                            className="bg-gradient-to-br from-bg/20 to-white/50 rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}

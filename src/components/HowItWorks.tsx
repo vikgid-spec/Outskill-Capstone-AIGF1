@@ -1,98 +1,149 @@
-import { MessageSquare, FileCheck, Send, Phone, FileText, LayoutDashboard } from 'lucide-react';
-import { supabase } from '../lib/supabase'
-
+import { MessageSquare, FileCheck, Send, FileText, Mic, LayoutDashboard } from 'lucide-react';
+import { useState } from 'react';
 
 export default function HowItWorks() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
   const steps = [
-    {
-      icon: MessageSquare,
-      title: 'Receive WhatsApp order',
-      description: 'Customer sends order details via WhatsApp like they always do',
+    { 
+      icon: MessageSquare, 
+      title: 'Customer sends order on WhatsApp', 
+      desc: 'No change in behaviour. Simple, familiar.',
+      shortTitle: 'WhatsApp Order Received',
+      bgColor: '#085480',
+      textColor: '#ffffff',
+      iconColor: '#ffffff',
     },
-    {
-      icon: FileCheck,
-      title: 'Auto-convert to purchase order',
-      description: 'Simbly instantly converts the message into a clean PO and saves it to your Gmail drafts',
+    { 
+      icon: FileCheck, 
+      title: 'SiMBly converts the message into a clean Purchase Order', 
+      desc: 'Extracted, structured, and auto-drafted in your Email Box.',
+      shortTitle: 'AI Converts to PO',
+      bgColor: '#085480',
+      textColor: '#ffffff',
+      iconColor: '#ffffff',
     },
-    {
-      icon: Send,
-      title: 'Review and send to supplier',
-      description: 'You quickly review the auto-generated PO and send it to your supplier with one click',
+    { 
+      icon: Send, 
+      title: 'You review & send with one click', 
+      desc: 'Orders go out faster and cleaner.',
+      shortTitle: 'You Review',
+      bgColor: '#ffb700',
+      textColor: '#085480',
+      iconColor: '#085480',
     },
-    {
-      icon: Phone,
-      title: 'Auto-reminder calls',
-      description: 'Our Voice AI agent automatically calls customers with payment reminders',
+    { 
+      icon: FileText, 
+      title: 'Invoices & debit notes auto-generated', 
+      desc: 'No more manual document creation. Coming soon!',
+      shortTitle: 'Debit Note Created',
+      bgColor: '#ffb700',
+      textColor: '#085480',
+      iconColor: '#085480',
     },
-    {
-      icon: FileText,
-      title: 'Debit notes sent automatically',
-      description: 'System generates and sends debit notes without any manual work',
+    { 
+      icon: Mic, 
+      title: 'Voice AI follows up for payments', 
+      desc: 'Polite, timely reminders in Hindi, English, or regional languages.',
+      shortTitle: 'Payment follow up',
+      bgColor: '#009480',
+      textColor: '#ffffff',
+      iconColor: '#ffffff',
     },
-    {
-      icon: LayoutDashboard,
-      title: 'Track everything on dashboard',
-      description: 'Monitor all orders and payment status in one clean, simple dashboard',
+    { 
+      icon: LayoutDashboard, 
+      title: 'Everything tracked on your dashboard', 
+      desc: 'Orders, payments, reminders, status — all in one view.',
+      shortTitle: 'Dashboard tracking',
+      bgColor: '#009480',
+      textColor: '#ffffff',
+      iconColor: '#ffffff',
     },
   ];
 
   return (
-    <section id="how-it-works" className="py-20 px-6 bg-gradient-to-br from-secondary/10 to-bg/20">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4">
-            How Simbly.ai works
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            From WhatsApp message to completed order in 6 simple steps
-          </p>
-        </div>
+    <section id="how-it-works" className="p-8 md:p-10">
+      <header className="mb-6 !text-left">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0c537e] leading-tight mb-4">
+          How it works
+        </h2>
+        <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8">
+          A simple flow from message to fulfilled order.
+        </p>
+      </header>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <div key={index} className="relative">
-                <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 h-full">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-md">
-                        <Icon size={24} className="text-white" />
-                      </div>
-                      <div className="mt-2 text-center">
-                        <span className="text-2xl font-bold text-primary">{index + 1}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        {step.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        {step.description}
-                      </p>
-                    </div>
+      {/* Full-width Video */}
+      <div className="relative w-full mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-200/50 bg-white/50">
+        <video
+          className="w-full h-auto block"
+          src="/hero.mp4"
+          controls
+          playsInline
+          autoPlay
+          loop
+          muted
+        />
+      </div>
+
+      {/* Horizontal Accordion */}
+      <div className="w-full h-[280px] md:h-[320px] flex gap-2 overflow-hidden">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isActive = activeIndex === index;
+          
+          return (
+            <div
+              key={index}
+              className={`relative flex-shrink-0 transition-all duration-500 ease-in-out cursor-pointer rounded-2xl overflow-hidden border-2 ${
+                isActive 
+                  ? 'flex-[3] border-[#085480]' 
+                  : 'flex-[1] border-gray-200/50 hover:flex-[1.5]'
+              }`}
+              onClick={() => setActiveIndex(index)}
+              style={{
+                backgroundColor: `${step.bgColor}CC`, // 80% opacity (CC = 204/255 ≈ 0.8)
+              }}
+            >
+              {/* Content Container */}
+              <div className={`absolute inset-0 p-4 md:p-5 flex flex-col transition-opacity duration-500 ${
+                isActive ? 'opacity-100' : 'opacity-100'
+              }`}>
+                {/* Icon */}
+                <div className={`mb-3 transition-all duration-500 ${
+                  isActive ? 'scale-110' : 'scale-100'
+                }`}>
+                  <div className="h-10 w-10 rounded-lg bg-white/20 grid place-items-center border border-white/30">
+                    <Icon className={`h-5 w-5 transition-colors duration-500`} style={{ color: step.iconColor }} />
                   </div>
                 </div>
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-primary to-secondary transform -translate-y-1/2 z-10">
-                    <div className="absolute right-0 top-1/2 w-2 h-2 bg-secondary rounded-full transform translate-x-1 -translate-y-1/2"></div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
 
-        <div className="mt-16 bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="aspect-video bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <div className="text-center text-white">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-white/30 transition-all">
-                <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1"></div>
+                {/* Title - Shows short title when inactive, full title when active */}
+                {isActive ? (
+                  <>
+                    <h3 className="font-medium mb-2 text-base md:text-lg transition-all duration-500" style={{ color: step.textColor }}>
+                      {step.title}
+                    </h3>
+                    {/* Description - Only visible when active */}
+                    <p className="leading-relaxed text-sm md:text-base transition-all duration-500 mb-2" style={{ color: step.textColor, opacity: 0.9 }}>
+                      {step.desc}
+                    </p>
+                  </>
+                ) : (
+                  <h3 className="font-medium mb-2 text-lg md:text-xl transition-all duration-500" style={{ color: step.textColor }}>
+                    {step.shortTitle}
+                  </h3>
+                )}
+
+                {/* Number Badge */}
+                <div className={`mt-auto text-xl md:text-2xl font-bold transition-all duration-500 ${
+                  isActive ? 'opacity-100' : 'opacity-80'
+                }`} style={{ color: step.textColor }}>
+                  {index + 1}
+                </div>
               </div>
-              <p className="text-xl font-semibold">Watch the complete workflow</p>
             </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </section>
   );
