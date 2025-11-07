@@ -67,10 +67,14 @@ export default function Pricing() {
                 <span className="text-sm text-gray-600 ml-2">/ {p.period}</span>
               </div>
 
-              <button className={`w-full mt-5 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition ${p.btn}`}>
-                {p.cta}
-                <ArrowRight className="h-4 w-4" />
-              </button>
+              {p.cta !== 'Book a demo' && (
+                <button
+                  className={`w-full mt-5 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition ${p.btn}`}
+                >
+                  {p.cta}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
 
               <ul className="mt-6 space-y-2">
                 {p.features.map((f) => (

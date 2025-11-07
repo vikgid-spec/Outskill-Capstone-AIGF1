@@ -68,7 +68,7 @@ export default function Benefits() {
       {/* Tagline */}
       <div className="text-center">
         <p className="text-xl md:text-2xl font-semibold text-[#085480] font-sans">
-          Cut order time. Cut payment delays. Grow without increasing staff.
+          Reduce order time. Eliminate payment delays. Grow without increasing staff.
         </p>
       </div>
     </section>

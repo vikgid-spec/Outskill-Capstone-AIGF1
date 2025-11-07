@@ -7,6 +7,9 @@ import SupplierListPage from './components/SupplierListPage';
 import DebtorListPage from './components/DebtorListPage';
 import SignUpPage from './components/SignUpPage';
 import LoginPage from './components/LoginPage';
+import DemoRequestPage from './components/DemoRequestPage';
+import JoinWaitlistPage from './components/JoinWaitlistPage';
+import ThankYouPage from './components/ThankYouPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 // SessionTimeoutWarning disabled - no automatic logout
 
@@ -73,6 +76,21 @@ function App() {
           <Route path="/signup" element={
             <PublicRoute>
               <SignUpPage />
+            </PublicRoute>
+          } />
+          <Route path="/demorequests" element={
+            <PublicRoute>
+              <DemoRequestPage />
+            </PublicRoute>
+          } />
+          <Route path="/joinwaitlist" element={
+            <PublicRoute>
+              <JoinWaitlistPage />
+            </PublicRoute>
+          } />
+          <Route path="/thank-you" element={
+            <PublicRoute>
+              <ThankYouPage />
             </PublicRoute>
           } />
           

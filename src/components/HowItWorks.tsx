@@ -1,8 +1,23 @@
 import { MessageSquare, FileCheck, Send, FileText, Mic, LayoutDashboard } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function HowItWorks() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        setIsDesktop(window.innerWidth >= 768);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const steps = [
     { 
@@ -67,7 +82,7 @@ export default function HowItWorks() {
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0c537e] leading-tight mb-4">
           How it works
         </h2>
-        <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8">
+        <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-6">
           A simple flow from message to fulfilled order.
         </p>
       </header>
@@ -75,9 +90,9 @@ export default function HowItWorks() {
       {/* Full-width Video */}
       <div className="relative w-full mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-200/50 bg-white/50">
         <video
-          className="w-full h-auto block"
+          className={`w-full h-auto block ${isDesktop ? '' : 'howitworks-inline-video'}`}
           src="/hero.mp4"
-          controls
+          controls={isDesktop}
           playsInline
           autoPlay
           loop
@@ -85,66 +100,88 @@ export default function HowItWorks() {
         />
       </div>
 
-      {/* Horizontal Accordion */}
-      <div className="w-full h-[280px] md:h-[320px] flex gap-2 overflow-hidden">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isActive = activeIndex === index;
-          
-          return (
-            <div
-              key={index}
-              className={`relative flex-shrink-0 transition-all duration-500 ease-in-out cursor-pointer rounded-2xl overflow-hidden border-2 ${
-                isActive 
-                  ? 'flex-[3] border-[#085480]' 
-                  : 'flex-[1] border-gray-200/50 hover:flex-[1.5]'
-              }`}
-              onClick={() => setActiveIndex(index)}
-              style={{
-                backgroundColor: `${step.bgColor}CC`, // 80% opacity (CC = 204/255 ≈ 0.8)
-              }}
-            >
-              {/* Content Container */}
-              <div className={`absolute inset-0 p-4 md:p-5 flex flex-col transition-opacity duration-500 ${
-                isActive ? 'opacity-100' : 'opacity-100'
-              }`}>
-                {/* Icon */}
-                <div className={`mb-3 transition-all duration-500 ${
-                  isActive ? 'scale-110' : 'scale-100'
-                }`}>
-                  <div className="h-10 w-10 rounded-lg bg-white/20 grid place-items-center border border-white/30">
-                    <Icon className={`h-5 w-5 transition-colors duration-500`} style={{ color: step.iconColor }} />
+      {isDesktop ? (
+        <div className="w-full h-[220px] md:h-[260px] flex gap-2 overflow-hidden">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isActive = activeIndex === index;
+
+            return (
+              <div
+                key={index}
+                className={`relative flex-shrink-0 transition-all duration-500 ease-in-out cursor-pointer rounded-2xl overflow-hidden border-2 ${
+                  isActive
+                    ? 'flex-[3] border-[#085480]'
+                    : 'flex-[1] border-gray-200/50 hover:flex-[1.5]'
+                }`}
+                onClick={() => setActiveIndex(index)}
+                style={{
+                  backgroundColor: `${step.bgColor}CC`,
+                }}
+              >
+                <div className="absolute inset-0 p-4 md:p-5 flex flex-col transition-opacity duration-500 opacity-100">
+                  <div className={`mb-3 transition-all duration-500 ${
+                    isActive ? 'scale-110' : 'scale-100'
+                  }`}>
+                    <div className="h-10 w-10 rounded-lg bg-white/20 grid place-items-center border border-white/30">
+                      <Icon className="h-5 w-5" style={{ color: step.iconColor }} />
+                    </div>
+                  </div>
+
+                  {isActive ? (
+                    <>
+                      <h3 className="font-medium mb-2 text-base md:text-lg" style={{ color: step.textColor }}>
+                        {step.title}
+                      </h3>
+                      <p className="leading-relaxed text-sm md:text-base mb-2" style={{ color: step.textColor, opacity: 0.9 }}>
+                        {step.desc}
+                      </p>
+                    </>
+                  ) : (
+                    <h3 className="font-medium mb-2 text-lg md:text-xl" style={{ color: step.textColor }}>
+                      {step.shortTitle}
+                    </h3>
+                  )}
+
+                  <div
+                    className={`mt-auto text-xl md:text-2xl font-bold transition-all duration-500 ${
+                      isActive ? 'opacity-100' : 'opacity-80'
+                    }`}
+                    style={{ color: step.textColor }}
+                  >
+                    {index + 1}
                   </div>
                 </div>
-
-                {/* Title - Shows short title when inactive, full title when active */}
-                {isActive ? (
-                  <>
-                    <h3 className="font-medium mb-2 text-base md:text-lg transition-all duration-500" style={{ color: step.textColor }}>
-                      {step.title}
-                    </h3>
-                    {/* Description - Only visible when active */}
-                    <p className="leading-relaxed text-sm md:text-base transition-all duration-500 mb-2" style={{ color: step.textColor, opacity: 0.9 }}>
-                      {step.desc}
-                    </p>
-                  </>
-                ) : (
-                  <h3 className="font-medium mb-2 text-lg md:text-xl transition-all duration-500" style={{ color: step.textColor }}>
-                    {step.shortTitle}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="w-full flex flex-col gap-4">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <div
+                key={index}
+                className="rounded-2xl border-2 border-gray-200/50 overflow-hidden"
+                style={{ backgroundColor: `${step.bgColor}CC` }}
+              >
+                <div className="p-4 flex flex-col gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-white/20 grid place-items-center border border-white/30">
+                    <Icon className="h-5 w-5" style={{ color: step.iconColor }} />
+                  </div>
+                  <h3 className="font-medium text-base" style={{ color: step.textColor }}>
+                    {step.title}
                   </h3>
-                )}
-
-                {/* Number Badge */}
-                <div className={`mt-auto text-xl md:text-2xl font-bold transition-all duration-500 ${
-                  isActive ? 'opacity-100' : 'opacity-80'
-                }`} style={{ color: step.textColor }}>
-                  {index + 1}
+                  <p className="text-sm leading-relaxed" style={{ color: step.textColor, opacity: 0.9 }}>
+                    {step.desc}
+                  </p>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

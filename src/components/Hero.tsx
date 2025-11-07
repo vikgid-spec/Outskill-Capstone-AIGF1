@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import whatsappIcon from '../assets/WhatsApp.svg';
 import automationIcon from '../assets/Automation.svg';
 import productivityIcon from '../assets/Productivity.svg';
 
 export default function Hero() {
+  const navigate = useNavigate();
   const [visibleCards, setVisibleCards] = useState<number[]>([]);
 
   const cards = [
@@ -59,9 +61,20 @@ export default function Hero() {
           <p className="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mb-6">
             <span className="font-bold">Built for Bharat. Designed for WhatsApp-first businesses:</span> SiMBly turns WhatsApp messages into clean POs and automates payment follow-ups — without you typing a single word.
           </p>
-          <button className="px-8 py-4 bg-[#075480] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 mb-8">
-            Book Demo
-          </button>
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+            <button
+              onClick={() => navigate('/demorequests')}
+              className="px-8 py-4 bg-[#075480] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            >
+              Book Demo
+            </button>
+            <button
+              onClick={() => navigate('/joinwaitlist')}
+              className="px-8 py-4 border-2 border-[#075480] text-[#075480] font-semibold rounded-full hover:bg-[#075480]/10 transition-all duration-200"
+            >
+              Join Waitlist
+            </button>
+          </div>
         </div>
 
         {/* Cards Container - Animate on Mount */}

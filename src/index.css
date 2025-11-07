@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+.howitworks-inline-video::-webkit-media-controls-start-playback-button,
+.howitworks-inline-video::-webkit-media-controls-overlay-play-button,
+.howitworks-inline-video::-webkit-media-controls {
+  display: none !important;
+}
+
+.howitworks-inline-video {
+  pointer-events: none;
+}
+
 @layer base {
   body {
     font-family: 'Noto Sans', sans-serif;
