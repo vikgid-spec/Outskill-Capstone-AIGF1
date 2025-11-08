@@ -4,14 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-.howitworks-inline-video::-webkit-media-controls-start-playback-button,
-.howitworks-inline-video::-webkit-media-controls-overlay-play-button,
-.howitworks-inline-video::-webkit-media-controls {
-  display: none !important;
-}
-
-.howitworks-inline-video {
-  pointer-events: none;
+@media (min-width: 768px) {
+  .howitworks-inline-video::-webkit-media-controls-start-playback-button,
+  .howitworks-inline-video::-webkit-media-controls-overlay-play-button,
+  .howitworks-inline-video::-webkit-media-controls {
+    display: none !important;
+  }
 }
 
 @layer base {
