@@ -92,11 +92,16 @@ export default function HowItWorks() {
         <video
           className={`w-full h-auto block ${isDesktop ? '' : 'howitworks-inline-video'}`}
           src="/hero.mp4"
-          controls={isDesktop}
+          controls
           playsInline
-          autoPlay
+          autoPlay={isDesktop}
           loop
-          muted
+          muted={isDesktop}
+          onPlay={(event) => {
+            if (!isDesktop) {
+              event.currentTarget.muted = false;
+            }
+          }}
         />
       </div>
 
