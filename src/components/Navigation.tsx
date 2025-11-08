@@ -113,11 +113,11 @@ export default function Navigation() {
         })}
       </div>
 
-      {/* Right: desktop auth/actions */}
-      <div className="hidden md:flex items-center">
+      {/* Right: auth/actions */}
+      <div className="flex items-center">
         <button
           onClick={() => navigate('/login')}
-          className="px-6 py-2 rounded-full border-2 bg-transparent text-[#085480] border-[#085480] font-semibold transition-all duration-200 hover:bg-[#085480] hover:text-white"
+          className="px-4 py-1.5 text-sm md:px-6 md:py-2 rounded-full border-2 border-[#085480] text-[#085480] font-semibold transition-all duration-200 bg-white/80 md:bg-transparent shadow-sm md:shadow-none hover:bg-[#085480] hover:text-white"
         >
           Login
         </button>
