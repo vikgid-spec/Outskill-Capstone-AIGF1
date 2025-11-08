@@ -97,6 +97,26 @@ export default function JoinWaitlistPage() {
         throw error;
       }
 
+      try {
+        const emailResponse = await fetch('/api/sendWaitlistEmail', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            full_name: formData.full_name.trim(),
+            email: formData.email.trim(),
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          const message = await emailResponse.text();
+          console.error('Failed to send waitlist email:', message);
+        }
+      } catch (emailError) {
+        console.error('Error calling waitlist email endpoint:', emailError);
+      }
+
       navigate('/thank-you', {
         state: {
           name: formData.full_name,
