@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { fetchRetellCallStats } from '../server/retellStats';
+import { fetchRetellCallStats } from '../server/retellStats.js';
 
 const RETELL_API_KEY = process.env.RETELL_API_KEY;
 
