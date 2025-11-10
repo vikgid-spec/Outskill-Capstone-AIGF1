@@ -85,7 +85,8 @@ export default function DemoRequestPage() {
       const submitData: any = {
         full_name: formData.full_name.trim(),
         work_email: formData.work_email.trim(),
-        company_name: formData.company_name.trim()
+        company_name: formData.company_name.trim(),
+        created_at: new Date().toISOString(),
       };
 
       // Add optional fields only if they have values

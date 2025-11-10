@@ -1,4 +1,4 @@
-import { CreditCard, Search, Phone, Calendar, MessageSquare, Play, User, Building2, PhoneCall, CheckCircle, Clock } from 'lucide-react';
+import { CreditCard, Search, Phone, Calendar, MessageSquare, Play, User, Building2, PhoneCall, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import AddDebtorModal from './AddDebtorModal';
@@ -32,9 +32,9 @@ export default function DebtorList() {
   const [itemsToShow, setItemsToShow] = useState(25); // Start with 25 items
   const [animatedValues, setAnimatedValues] = useState({
     totalDebtors: 0,
-    paid: 0,
     promisedPayment: 0,
     withCallHistory: 0,
+    callsMade: 0,
   });
 
   // Initial fetch + Realtime subscription
@@ -394,9 +394,9 @@ export default function DebtorList() {
     const interval = duration / steps;
 
     const totalDebtors = debtorList.length;
-    const paid = debtorList.filter(d => d.payment_status && d.payment_status.toLowerCase().includes('paid')).length;
     const promisedPayment = debtorList.filter(d => d.payment_status && d.payment_status.toLowerCase().includes('will pay')).length;
     const withCallHistory = debtorList.filter(d => d.call_count && d.call_count > 0).length;
+    const callsMade = debtorList.reduce((sum, d) => sum + (d.call_count ?? 0), 0);
 
     let step = 0;
     const timer = setInterval(() => {
@@ -406,18 +406,18 @@ export default function DebtorList() {
 
       setAnimatedValues({
         totalDebtors: Math.floor(totalDebtors * easeOutQuart),
-        paid: Math.floor(paid * easeOutQuart),
         promisedPayment: Math.floor(promisedPayment * easeOutQuart),
         withCallHistory: Math.floor(withCallHistory * easeOutQuart),
+        callsMade: Math.floor(callsMade * easeOutQuart),
       });
 
       if (step >= steps) {
         clearInterval(timer);
         setAnimatedValues({
           totalDebtors,
-          paid,
           promisedPayment,
           withCallHistory,
+          callsMade,
         });
       }
     }, interval);
@@ -510,21 +510,6 @@ export default function DebtorList() {
           </div>
         </div>
 
-        {/* Paid */}
-        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
-          <div className="px-5 py-4 border-b border-gray-200/50">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#111826]">Paid</h2>
-              <div className="p-2 rounded-lg bg-[#03c5dc]">
-                <CheckCircle className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-          <div className="px-5 py-4">
-            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.paid}</div>
-          </div>
-        </div>
-
         {/* Promised Payment */}
         <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
           <div className="px-5 py-4 border-b border-gray-200/50">
@@ -552,6 +537,21 @@ export default function DebtorList() {
           </div>
           <div className="px-5 py-4">
             <div className="text-2xl font-semibold text-[#111826]">{animatedValues.withCallHistory}</div>
+          </div>
+        </div>
+
+        {/* Calls Made */}
+        <div className="bg-[#22c6dc]/15 backdrop-blur-sm border border-gray-200/50 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#111826]">Calls Made</h2>
+              <div className="p-2 rounded-lg bg-[#03c5dc]">
+                <PhoneCall className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 py-4">
+            <div className="text-2xl font-semibold text-[#111826]">{animatedValues.callsMade}</div>
           </div>
         </div>
       </div>
