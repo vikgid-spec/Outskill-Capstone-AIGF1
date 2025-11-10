@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { full_name, email } = (await req.json()) as {
+    const { full_name, email } = (req.body ?? {}) as {
       full_name?: string;
       email?: string;
     };
